@@ -19,6 +19,7 @@ EXPOSE 3001
 # Set environment
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV CACHE_BUST=1
 
 # Start the server
 CMD ["npx", "tsx", "src/backend/server.ts"]
