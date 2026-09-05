@@ -86,10 +86,16 @@ CRITICAL INSTRUCTIONS:
 1. Keep the exact same structure, sections, and formatting as the original
 2. NEVER copy the job title or exact role name into the resume
 3. Rewrite bullet points to reflect genuine experience that aligns with job requirements
-4. Use varied, natural language - avoid repetitive phrasing and AI-like patterns
-5. Incorporate keywords subtly through natural context, not forced insertion
-6. Vary sentence structure (some short, some longer, mix passive and active voice)
-7. Add specific details and metrics that feel authentic
+4. ADD METRICS AND NUMBERS to every bullet point where possible:
+   - Percentages (e.g., "Improved efficiency by 25%")
+   - Dollar amounts (e.g., "Generated $500K in revenue")
+   - Headcount (e.g., "Led team of 12 engineers")
+   - Time savings (e.g., "Reduced load time from 8s to 2s")
+   - Growth metrics (e.g., "Grew user base by 40%")
+   - If exact numbers aren't in original, estimate realistic ranges based on typical impact
+5. Use varied, natural language - avoid repetitive phrasing and AI-like patterns
+6. Incorporate keywords subtly through natural context, not forced insertion
+7. Vary sentence structure (some short, some longer, mix passive and active voice)
 8. Use different phrasings for similar concepts to avoid sounding templated
 9. Keep professional summary focused on the candidate's unique value, not copying the job description
 10. Maintain the same visual structure and spacing - no formatting changes
@@ -100,7 +106,7 @@ ${jobDescription}
 Original Resume:
 ${resume}
 
-Write the tailored resume to highlight relevant experience naturally. Make it sound like it was written by the candidate themselves, not by an AI. Focus on authentic alignment between their experience and the job, not keyword matching.
+Write the tailored resume to highlight relevant experience naturally with strong metrics. Make it sound like it was written by the candidate themselves, not by an AI. Focus on authentic alignment between their experience and the job, not keyword matching.
 
 Return ONLY the tailored resume in the exact same format as the original. Do not add any explanations, metadata, or commentary.`;
 
