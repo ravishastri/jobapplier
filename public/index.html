@@ -389,7 +389,9 @@
 
     function logout() {
       if (confirm('Are you sure you want to logout?')) {
-        localStorage.clear();
+        // Only clear auth data, keep profile and resume
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = '/auth.html';
       }
     }
