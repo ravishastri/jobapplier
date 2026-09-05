@@ -18,6 +18,17 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
+// Setup endpoint to initialize database
+app.post('/api/setup', async (req: Request, res: Response) => {
+  try {
+    await initializeDatabase();
+    res.json({ success: true, message: 'Database initialized successfully' });
+  } catch (error) {
+    console.error('Setup error:', error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+
 // Goals
 app.get('/api/goals', async (req: Request, res: Response) => {
   try {
@@ -860,16 +871,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-async function start() {
-  try {
-    await initializeDatabase();
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-}
-
-start();
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
