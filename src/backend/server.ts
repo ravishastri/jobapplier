@@ -72,10 +72,15 @@ Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
 
 app.post('/api/tailor-resume', authenticateToken, async (req, res) => {
   try {
-    const { resume, jobDescription } = req.body;
+    const { resume, jobDescription, originalFormat } = req.body;
 
     if (!resume || !jobDescription) {
       return res.status(400).json({ error: 'resume and jobDescription required' });
+    }
+
+    let formatInstructions = '';
+    if (originalFormat) {
+      formatInstructions = `\n\nIMPORTANT: Match the exact formatting style of this original resume:\n${originalFormat}\n\nKeep the same structure, spacing, and style while tailoring the content.`;
     }
 
     const prompt = `You are an expert resume writer. Here is a job description:
@@ -89,7 +94,7 @@ ${resume}
 Please tailor this resume to better match the job description. Focus on:
 1. Reordering bullet points to highlight most relevant experience
 2. Adjusting language to match keywords from the job description
-3. Emphasizing relevant skills and achievements
+3. Emphasizing relevant skills and achievements${formatInstructions}
 
 Return the tailored resume in plain text format.`;
 

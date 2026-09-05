@@ -74,6 +74,14 @@
       <div class="card" style="grid-column: 1 / -1;">
         <h2>📄 Your Resume (Structured)</h2>
 
+        <!-- File Upload for Format -->
+        <div class="input-group">
+          <label>📤 Or upload your current resume (to preserve format)</label>
+          <input type="file" id="resumeFileUpload" accept=".txt,.pdf,.doc,.docx" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; width: 100%;">
+          <button class="btn-secondary btn-small" onclick="loadResumeFromFile()" style="margin-top: 8px;">Load Format</button>
+          <div id="fileStatus"></div>
+        </div>
+
         <!-- Contact Info -->
         <div class="resume-section">
           <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">👤 Contact Information</h3>
@@ -167,6 +175,43 @@
 
   <script>
     let fullTailoredResume = ''; // Store full resume text for download
+    let resumeFormat = ''; // Store original resume format for tailoring
+
+    function loadResumeFromFile() {
+      const file = document.getElementById('resumeFileUpload').files[0];
+      if (!file) {
+        document.getElementById('fileStatus').innerHTML = '<div class="error">Please select a file</div>';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        resumeFormat = content; // Store original format
+
+        // Try to parse and auto-fill fields
+        try {
+          // Simple parsing - look for common sections
+          const lines = content.split('\n');
+          let name = '', email = '', phone = '';
+
+          for (const line of lines) {
+            if (line.includes('@')) email = line.trim();
+            if (line.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/)) phone = line.trim();
+          }
+
+          if (email) document.getElementById('resumeEmail').value = email;
+          if (phone) document.getElementById('resumePhone').value = phone;
+
+          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format loaded! (Email and phone auto-filled if found)</div>';
+          setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 3000);
+        } catch (err) {
+          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format loaded!</div>';
+          setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 3000);
+        }
+      };
+      reader.readAsText(file);
+    }
 
     // Load saved data on page load
     window.addEventListener('load', () => {
@@ -357,10 +402,15 @@
       resumeContainer.innerHTML = '';
 
       try {
+        const payload = {
+          resume: storedResume,
+          jobDescription,
+          originalFormat: resumeFormat // Include original format for Claude to match
+        };
         const response = await fetch('/api/tailor-resume', {
           method: 'POST',
           headers: getAuthHeaders(),
-          body: JSON.stringify({ resume: storedResume, jobDescription })
+          body: JSON.stringify(payload)
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
