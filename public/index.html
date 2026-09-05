@@ -204,7 +204,7 @@
         try {
           const lines = content.split('\n');
           let name = '', email = '', phone = '', linkedin = '';
-          let experience = '', education = '', skills = '';
+          let summary = '', experience = '', education = '', skills = '', certs = '', projects = '';
 
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
@@ -235,14 +235,23 @@
             }
 
             // Collect section content
-            if (line.match(/EXPERIENCE|WORK HISTORY/i)) {
+            if (line.match(/SUMMARY|OBJECTIVE|PROFESSIONAL SUMMARY/i)) {
+              summary = lines.slice(i + 1, Math.min(i + 4, lines.length)).join('\n').trim();
+            }
+            if (line.match(/EXPERIENCE|WORK HISTORY|EMPLOYMENT/i)) {
               experience = lines.slice(i + 1, Math.min(i + 10, lines.length)).join('\n').trim();
             }
-            if (line.match(/EDUCATION/i)) {
+            if (line.match(/EDUCATION|TRAINING/i)) {
               education = lines.slice(i + 1, Math.min(i + 5, lines.length)).join('\n').trim();
             }
-            if (line.match(/SKILLS|TECHNICAL/i)) {
+            if (line.match(/SKILLS|TECHNICAL|COMPETENCIES/i)) {
               skills = lines.slice(i + 1, Math.min(i + 8, lines.length)).join('\n').trim();
+            }
+            if (line.match(/CERTIFICATIONS|CERTIFICATES|LICENSES/i)) {
+              certs = lines.slice(i + 1, Math.min(i + 4, lines.length)).join('\n').trim();
+            }
+            if (line.match(/PROJECTS/i)) {
+              projects = lines.slice(i + 1, Math.min(i + 5, lines.length)).join('\n').trim();
             }
           }
 
@@ -251,11 +260,14 @@
           if (email) document.getElementById('resumeEmail').value = email;
           if (phone) document.getElementById('resumePhone').value = phone;
           if (linkedin) document.getElementById('resumeLinkedin').value = linkedin;
+          if (summary) document.getElementById('resumeSummary').value = summary;
           if (experience) document.getElementById('resumeExperience').value = experience;
           if (education) document.getElementById('resumeEducation').value = education;
           if (skills) document.getElementById('resumeSkills').value = skills;
+          if (certs) document.getElementById('resumeCerts').value = certs;
+          if (projects) document.getElementById('resumeProjects').value = projects;
 
-          const extracted = [name, email, phone, linkedin].filter(x => x).length;
+          const extracted = [name, email, phone, linkedin, summary, experience].filter(x => x).length;
           document.getElementById('fileStatus').innerHTML = `<div class="success">✅ Resume loaded! (${extracted} fields auto-filled)</div>`;
           setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 4000);
         } catch (err) {
