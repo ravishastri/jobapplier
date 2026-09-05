@@ -40,11 +40,10 @@
     .answer-label { font-weight: 600; color: #667eea; font-size: 0.9em; margin-bottom: 8px; }
     .answer-text { color: #333; line-height: 1.6; font-size: 0.95em; }
     .resume-output { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 20px; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.6; color: #333; max-height: 500px; overflow-y: auto; }
-    .copy-btn { background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; margin-top: 10px; width: auto; }
-    .copy-btn:hover { background: #764ba2; }
+    .action-buttons { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .action-btn { background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; width: auto; }
+    .action-btn:hover { background: #764ba2; }
     .badge { display: inline-block; background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; margin-top: 5px; }
-    .button-row { display: flex; gap: 10px; margin-top: 15px; }
-    .button-row button { flex: 1; }
     @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } .answers-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -206,7 +205,6 @@
     }
 
     async function tailorResume() {
-      const profileNotes = localStorage.getItem('jobApplierProfile') || document.getElementById('profileNotes').value.trim();
       const storedResume = localStorage.getItem('jobApplierResume') || document.getElementById('storedResume').value.trim();
       const jobDescription = document.getElementById('jobDescription').value.trim();
       const resumeContainer = document.getElementById('resumeContainer');
@@ -234,7 +232,7 @@
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         resumeMessage.innerHTML = '<div class="success">✅ Resume tailored!</div>';
-        const resumeHtml = `<div class="resume-output">${data.tailoredResume}</div><button class="copy-btn" onclick="copyToClipboard('.resume-output')">📋 Copy to Clipboard</button>`;
+        const resumeHtml = `<div class="resume-output" id="tailoredResumeText">${data.tailoredResume}</div><div class="action-buttons"><button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy to Clipboard</button><button class="action-btn" onclick="downloadResume()">⬇️ Download Resume</button></div>`;
         resumeContainer.innerHTML = resumeHtml;
       } catch (error) {
         resumeMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
@@ -249,6 +247,24 @@
       }).catch(err => {
         alert('❌ Failed to copy: ' + err);
       });
+    }
+
+    function downloadResume() {
+      const element = document.getElementById('tailoredResumeText');
+      if (!element) {
+        alert('No resume to download');
+        return;
+      }
+      const text = element.textContent;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tailored-resume-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
     }
   </script>
 </body>
