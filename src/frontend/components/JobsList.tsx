@@ -118,6 +118,11 @@ export default function JobsList() {
     description: '',
     questions: ''
   });
+  const [skillsGapAnalysis, setSkillsGapAnalysis] = useState<{
+    missingSkills: string[];
+    recommendedBullets: string[];
+  } | null>(null);
+  const [analyzingSkillsGap, setAnalyzingSkillsGap] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<{
     tailoredResume: string;
     answers: string;
@@ -127,6 +132,27 @@ export default function JobsList() {
   const handleAnalyzeWithAgent = async (jobId: number) => {
     setJobDetailsJobId(jobId);
     setShowJobDetails(true);
+  };
+
+  const handleAnalyzeSkillsGap = async () => {
+    if (!jobDetails.description) {
+      alert('Please paste job description first');
+      return;
+    }
+
+    setAnalyzingSkillsGap(true);
+    try {
+      const response = await axios.post('http://localhost:3001/api/analyze-skills-gap', {
+        jobDescription: jobDetails.description,
+        resumeId: 1
+      });
+      setSkillsGapAnalysis(response.data);
+    } catch (error) {
+      console.error('Error analyzing skills gap:', error);
+      alert('Error analyzing skills gap');
+    } finally {
+      setAnalyzingSkillsGap(false);
+    }
   };
 
   const handleGenerateFromDetails = async () => {
@@ -373,6 +399,59 @@ export default function JobsList() {
                 className="job-details-textarea"
               />
             </div>
+
+            <div className="form-group">
+              <button
+                onClick={handleAnalyzeSkillsGap}
+                disabled={analyzingSkillsGap || !jobDetails.description}
+                className="btn btn-secondary"
+                style={{ width: '100%' }}
+              >
+                {analyzingSkillsGap ? '🔍 Analyzing Skills...' : '🔍 Analyze Skills Gap'}
+              </button>
+            </div>
+
+            {skillsGapAnalysis && (
+              <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '8px', marginBottom: '15px' }}>
+                <h4 style={{ marginTop: 0, marginBottom: '12px', color: '#333' }}>📊 Skills Gap Analysis</h4>
+
+                {skillsGapAnalysis.missingSkills.length > 0 && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <h5 style={{ marginBottom: '8px', color: '#666' }}>Missing Skills:</h5>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {skillsGapAnalysis.missingSkills.map((skill, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            backgroundColor: '#ffebee',
+                            color: '#c62828',
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                            border: '1px solid #ef5350'
+                          }}
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {skillsGapAnalysis.recommendedBullets.length > 0 && (
+                  <div>
+                    <h5 style={{ marginBottom: '8px', color: '#666' }}>Recommended Resume Bullets:</h5>
+                    <ul style={{ margin: '0', paddingLeft: '20px', lineHeight: '1.6' }}>
+                      {skillsGapAnalysis.recommendedBullets.map((bullet, idx) => (
+                        <li key={idx} style={{ marginBottom: '8px', fontSize: '13px', color: '#333' }}>
+                          {bullet}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="analysis-actions">
               <button

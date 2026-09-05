@@ -401,6 +401,68 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
   }
 });
 
+// Analyze skills gap between job and resume
+app.post('/api/analyze-skills-gap', authenticateToken, async (req, res) => {
+  try {
+    const { jobDescription, resumeId } = req.body;
+
+    if (!jobDescription) {
+      return res.status(400).json({ error: 'Job description required' });
+    }
+
+    // For now, get a sample resume or use a placeholder
+    // In production, this would fetch from DB using resumeId
+    const sampleResume = `Senior Full Stack Engineer
+2020-Present: Tech Company
+- Built microservices using Node.js and Python
+- Led team of 5 engineers
+- Improved performance by 40%
+
+2018-2020: Startup
+- Developed React applications
+- Managed PostgreSQL databases
+- Deployed to AWS`;
+
+    const analysisPrompt = `Analyze the skills gap between a job description and a resume.
+
+Job Description:
+${jobDescription}
+
+Current Resume:
+${sampleResume}
+
+Return a JSON object with:
+- missingSkills: array of skills mentioned in the job that are NOT clearly in the resume
+- recommendedBullets: array of 2-3 suggested resume bullet points that would address the missing skills
+
+Focus on technical skills, tools, and relevant experience. Be concise.
+
+Return ONLY valid JSON, no markdown formatting.`;
+
+    const response = await client.messages.create({
+      model: 'claude-opus-5',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: analysisPrompt }],
+    });
+
+    const textContent = response.content.find((c: any) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
+    }
+
+    let jsonText = textContent.text.trim();
+    if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
+    const analysis = JSON.parse(jsonText);
+    res.json(analysis);
+  } catch (error) {
+    console.error('Error analyzing skills gap:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 // Update job application status (applied, recruiter contacted)
 app.post('/api/jobs/:id/update-status', authenticateToken, async (req, res) => {
   try {
