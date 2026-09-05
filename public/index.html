@@ -166,43 +166,15 @@
       loadResume();
     });
 
-    async function saveProfile() {
+    function saveProfile() {
       const profile = document.getElementById('profileNotes').value.trim();
       if (!profile) {
         document.getElementById('profileStatus').innerHTML = '<div class="error">⚠️ Please enter your profile first</div>';
         return;
       }
-
-      try {
-        // Get current stored resume to avoid overwriting
-        const token = localStorage.getItem('token');
-        let currentResume = '';
-        if (token) {
-          const userRes = await fetch('/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (userRes.ok) {
-            const user = await userRes.json();
-            currentResume = user.stored_resume || '';
-          }
-        }
-
-        // Save to database
-        const response = await fetch('/auth/profile', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ profileNotes: profile, storedResume: currentResume })
-        });
-
-        if (!response.ok) throw new Error('Failed to save profile');
-
-        // Also save locally
-        localStorage.setItem('jobApplierProfile', profile);
-        document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile saved!</div>';
-        setTimeout(() => { document.getElementById('profileStatus').innerHTML = ''; }, 3000);
-      } catch (error) {
-        document.getElementById('profileStatus').innerHTML = '<div class="error">❌ Error: ' + error.message + '</div>';
-      }
+      localStorage.setItem('jobApplierProfile', profile);
+      document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile saved!</div>';
+      setTimeout(() => { document.getElementById('profileStatus').innerHTML = ''; }, 3000);
     }
 
     function clearProfile() {
@@ -213,43 +185,15 @@
       }
     }
 
-    async function saveResume() {
+    function saveResume() {
       const resume = document.getElementById('storedResume').value.trim();
       if (!resume) {
         document.getElementById('resumeStatus').innerHTML = '<div class="error">⚠️ Please enter your resume first</div>';
         return;
       }
-
-      try {
-        // Get current profile notes to avoid overwriting
-        const token = localStorage.getItem('token');
-        let currentProfile = '';
-        if (token) {
-          const userRes = await fetch('/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (userRes.ok) {
-            const user = await userRes.json();
-            currentProfile = user.profile_notes || '';
-          }
-        }
-
-        // Save to database
-        const response = await fetch('/auth/profile', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ profileNotes: currentProfile, storedResume: resume })
-        });
-
-        if (!response.ok) throw new Error('Failed to save resume');
-
-        // Also save locally
-        localStorage.setItem('jobApplierResume', resume);
-        document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved!</div>';
-        setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
-      } catch (error) {
-        document.getElementById('resumeStatus').innerHTML = '<div class="error">❌ Error: ' + error.message + '</div>';
-      }
+      localStorage.setItem('jobApplierResume', resume);
+      document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved!</div>';
+      setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
     }
 
     function clearResume() {
