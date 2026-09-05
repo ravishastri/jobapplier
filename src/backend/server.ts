@@ -2,8 +2,6 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { query, initializeDatabase } from './db';
-import { chromium } from 'playwright';
 
 dotenv.config();
 
@@ -13,8 +11,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Initialize database in background on startup (commented out to debug)
-// initializeDatabase().catch(err => console.error('Background init error:', err));
+console.log('Server starting on port', PORT);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
