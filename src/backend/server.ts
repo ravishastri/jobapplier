@@ -39,7 +39,8 @@ Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
 
     const content = response.content[0];
     if (content.type !== 'text') {
-      throw new Error('Unexpected response type');
+      console.error('Generate answers - Response type:', content.type, 'Full response:', response);
+      throw new Error(`Unexpected response type: ${content.type}`);
     }
 
     let jsonText = content.text;
@@ -86,7 +87,8 @@ Return the tailored resume in plain text format.`;
 
     const content = response.content[0];
     if (content.type !== 'text') {
-      throw new Error('Unexpected response type');
+      console.error('Tailor resume - Response type:', content.type, 'Full response:', response);
+      throw new Error(`Unexpected response type: ${content.type}`);
     }
 
     res.json({ tailoredResume: content.text });
