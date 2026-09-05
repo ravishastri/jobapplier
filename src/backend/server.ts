@@ -213,23 +213,111 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
 // Download tailored resume as Word document
 app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
   try {
-    const { resumeText } = req.body;
+    const { resumeText, company, jobTitle, saveToFolder } = req.body;
 
     if (!resumeText) {
       return res.status(400).json({ error: 'resumeText required' });
     }
 
-    // Parse the resume text into paragraphs with formatting
-    const lines = resumeText.split('\n');
-    const paragraphs = [];
-    let headerIndex = 0;
-    let sectionHeaderCount = 0;
+    // Create folder path - allow custom folder or use company/job title
+    let folderPath = 'tailored-resumes';
+    if (saveToFolder) {
+      folderPath = `tailored-resumes/${saveToFolder}`;
+    } else if (company || jobTitle) {
+      const folderName = (company || jobTitle || 'general').replace(/[/\\:*?"<>|]/g, '_').substring(0, 50);
+      folderPath = `tailored-resumes/${folderName}`;
+    }
 
-    lines.forEach((line, idx) => {
+    // Ensure folder exists
+    const fullFolderPath = path.join(__dirname, `../../${folderPath}`);
+    await fs.mkdir(fullFolderPath, { recursive: true });
+
+    // Save to folder
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const filename = `${timestamp}-${Date.now()}.docx`;
+      const filepath = path.join(fullFolderPath, filename);
+
+      // Parse and create document (same as before)
+      const lines = resumeText.split('\n');
+      const paragraphs = [];
+      let headerIndex = 0;
+      let sectionHeaderCount = 0;
+
+      lines.forEach((line, idx) => {
+        const trimmedLine = line.trim();
+        const isEmpty = !trimmedLine;
+
+        const isSectionHeader = /^[A-Z][A-Z\s]*$/.test(trimmedLine) &&
+                               (trimmedLine.length < 60) &&
+                               (trimmedLine.includes('EXPERTISE') ||
+                                trimmedLine.includes('EXPERIENCE') ||
+                                trimmedLine.includes('EDUCATION') ||
+                                trimmedLine.includes('SKILLS'));
+
+        let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3;
+
+        if (isSectionHeader && trimmedLine.includes('EXPERTISE')) {
+          headerIndex = idx;
+        }
+        if (headerIndex > 0 && idx > headerIndex && idx <= headerIndex + 2 && !isEmpty && !isSectionHeader) {
+          isCentered = true;
+        }
+
+        if (isSectionHeader) {
+          isCentered = true;
+          sectionHeaderCount++;
+        }
+
+        const isBullet = trimmedLine.startsWith('-') || trimmedLine.startsWith('•');
+        const cleanLine = trimmedLine.replace(/^[-•]\s*/, '').trim();
+
+        if (!isEmpty) {
+          headerIndex++;
+        }
+
+        const paragraph = new Paragraph({
+          children: [
+            new TextRun({
+              text: cleanLine || '',
+              bold: false
+            })
+          ],
+          spacing: { line: 240, lineRule: 'auto' },
+          alignment: isCentered ? 'center' : undefined,
+          bullet: isBullet ? {
+            level: 0
+          } : undefined,
+          indent: isBullet ? { left: 720, hanging: 360 } : undefined
+        });
+
+        paragraphs.push(paragraph);
+      });
+
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: paragraphs
+        }]
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      await fs.writeFile(filepath, buffer);
+      console.log(`✅ Tailored resume saved to: ${filepath}`);
+    } catch (saveError) {
+      console.error('Warning: Could not save tailored resume locally:', saveError);
+    }
+
+    // Create Word document for download
+    const downloadLines = resumeText.split('\n');
+    const downloadParagraphs = [];
+    let downloadHeaderIndex = 0;
+    let downloadSectionHeaderCount = 0;
+
+    downloadLines.forEach((line, idx) => {
       const trimmedLine = line.trim();
       const isEmpty = !trimmedLine;
 
-      // Check if line is a section header (AREAS OF EXPERTISE, EXPERIENCE, etc)
       const isSectionHeader = /^[A-Z][A-Z\s]*$/.test(trimmedLine) &&
                              (trimmedLine.length < 60) &&
                              (trimmedLine.includes('EXPERTISE') ||
@@ -237,29 +325,25 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
                               trimmedLine.includes('EDUCATION') ||
                               trimmedLine.includes('SKILLS'));
 
-      // Center first 3 non-empty lines (Name, title, contact)
-      let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3;
+      let isCentered = downloadSectionHeaderCount === 0 && !isEmpty && downloadHeaderIndex < 3;
 
-      // After AREAS OF EXPERTISE header, center the next 2 non-empty lines
       if (isSectionHeader && trimmedLine.includes('EXPERTISE')) {
-        headerIndex = idx;
+        downloadHeaderIndex = idx;
       }
-      if (headerIndex > 0 && idx > headerIndex && idx <= headerIndex + 2 && !isEmpty && !isSectionHeader) {
+      if (downloadHeaderIndex > 0 && idx > downloadHeaderIndex && idx <= downloadHeaderIndex + 2 && !isEmpty && !isSectionHeader) {
         isCentered = true;
       }
 
-      // Check if line is a section header itself
       if (isSectionHeader) {
         isCentered = true;
-        sectionHeaderCount++;
+        downloadSectionHeaderCount++;
       }
 
-      // Check if line is a bullet point
       const isBullet = trimmedLine.startsWith('-') || trimmedLine.startsWith('•');
       const cleanLine = trimmedLine.replace(/^[-•]\s*/, '').trim();
 
       if (!isEmpty) {
-        headerIndex++;
+        downloadHeaderIndex++;
       }
 
       const paragraph = new Paragraph({
@@ -277,18 +361,16 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
         indent: isBullet ? { left: 720, hanging: 360 } : undefined
       });
 
-      paragraphs.push(paragraph);
+      downloadParagraphs.push(paragraph);
     });
 
-    // Create Word document
     const doc = new Document({
       sections: [{
         properties: {},
-        children: paragraphs
+        children: downloadParagraphs
       }]
     });
 
-    // Convert to buffer and send
     const buffer = await Packer.toBuffer(doc);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');

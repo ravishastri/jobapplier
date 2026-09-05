@@ -96,6 +96,14 @@
       <div class="card">
         <h2>💼 Job Description</h2>
         <div class="input-group">
+          <label>Company (optional - for organizing saved resumes)</label>
+          <input type="text" id="jobCompany" placeholder="e.g., Google, Meta, etc.">
+        </div>
+        <div class="input-group">
+          <label>Job Title (optional - for organizing saved resumes)</label>
+          <input type="text" id="jobTitle" placeholder="e.g., Senior React Developer">
+        </div>
+        <div class="input-group">
           <label>Paste the job description or key requirements</label>
           <textarea id="jobDescription" placeholder="Senior React Developer needed..."></textarea>
         </div>
@@ -407,10 +415,17 @@
         return;
       }
       try {
+        const company = document.getElementById('jobCompany').value.trim();
+        const jobTitle = document.getElementById('jobTitle').value.trim();
+
         const response = await fetch('/api/download-resume-word', {
           method: 'POST',
           headers: getAuthHeaders(),
-          body: JSON.stringify({ resumeText: fullTailoredResume })
+          body: JSON.stringify({
+            resumeText: fullTailoredResume,
+            company: company || undefined,
+            jobTitle: jobTitle || undefined
+          })
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const blob = await response.blob();
