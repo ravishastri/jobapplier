@@ -2,6 +2,7 @@ import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import authRouter, { initializeAuthDB, authenticateToken } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -9,6 +10,12 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../..', 'public')));
+
+// Initialize auth database
+initializeAuthDB();
+
+// Auth routes
+app.use('/auth', authRouter);
 
 const client = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -22,7 +29,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.post('/api/generate-answers', async (req, res) => {
+app.post('/api/generate-answers', authenticateToken, async (req, res) => {
   try {
     const { questions, context } = req.body;
 
@@ -63,7 +70,7 @@ Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
   }
 });
 
-app.post('/api/tailor-resume', async (req, res) => {
+app.post('/api/tailor-resume', authenticateToken, async (req, res) => {
   try {
     const { resume, jobDescription } = req.body;
 
