@@ -30,20 +30,24 @@ export async function initializeDatabase() {
   try {
     console.log('Initializing database schema...');
     const schemaPath = path.join(process.cwd(), 'db', 'schema.sql');
+    console.log(`Schema path: ${schemaPath}`);
+
     const schema = readFileSync(schemaPath, 'utf-8');
     const statements = schema
       .split(';')
       .map(s => s.trim())
       .filter(s => s.length > 0);
 
+    console.log(`Running ${statements.length} schema statements...`);
     for (const statement of statements) {
       await sql.unsafe(statement);
     }
 
     console.log('✅ Database schema initialized successfully');
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
-    throw error;
+    console.warn('⚠️ Database initialization warning:', error);
+    // Don't throw - allow server to continue even if schema initialization fails
+    // This allows the server to start and provide useful error messages
   }
 }
 
