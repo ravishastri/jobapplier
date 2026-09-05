@@ -184,13 +184,13 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
                                 trimmedLine.includes('EDUCATION') ||
                                 trimmedLine.includes('SKILLS'));
 
-        // Center only the very first section (name/title/contact at top)
-        let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3 && !isJobTitle(trimmedLine);
-
-        // Center section headers only (EXPERIENCE, EDUCATION, etc)
+        // Center ONLY: first 3 non-empty lines (name/contact) + section headers
+        let isCentered = false;
         if (isSectionHeader) {
           isCentered = true;
           sectionHeaderCount++;
+        } else if (sectionHeaderCount === 0 && !isEmpty && headerIndex < 3) {
+          isCentered = true;
         }
 
         // Check if line is a bullet point
@@ -201,7 +201,7 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
           headerIndex++;
         }
 
-        const shouldBeBold = !isCentered && !isBullet && isJobTitle(cleanLine);
+        const shouldBeBold = !isBullet && isJobTitle(cleanLine);
         const paragraph = new Paragraph({
           children: createTextRunsWithLinks(cleanLine || '', shouldBeBold),
           spacing: { line: 240, lineRule: 'auto' },
