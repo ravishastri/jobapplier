@@ -32,7 +32,9 @@
       "Bash(git commit -m 'Strip server to minimal version for debugging *)",
       "Bash(git commit -m 'Fix PathError by removing problematic static file serving *)",
       "Bash(grep -E '\\\\.\\(json|yaml|yml\\)$')",
-      "Bash(timeout 3 npx tsx src/backend/server.ts)"
+      "Bash(timeout 3 npx tsx src/backend/server.ts)",
+      "Bash(curl -s https://jobapplier-production.up.railway.app/)",
+      "Bash(curl -s -X POST https://jobapplier-production.up.railway.app/api/generate-answers -H 'Content-Type: application/json' -d '{ *)"
     ]
   }
 }

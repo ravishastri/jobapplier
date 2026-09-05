@@ -1,13 +1,21 @@
 import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../..', 'public')));
 
 const client = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/index.html'));
 });
 
 app.get('/health', (req, res) => {
