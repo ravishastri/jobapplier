@@ -213,11 +213,35 @@
       }
     }
 
-    function loadResume() {
+    async function loadResume() {
       const saved = localStorage.getItem('jobApplierResume');
       if (saved) {
         document.getElementById('storedResume').value = saved;
         document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from memory</div>';
+      }
+
+      // Try to load from database if not in localStorage
+      if (!saved) {
+        try {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const response = await fetch('/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (response.ok) {
+              const user = await response.json();
+              if (user.stored_resume) {
+                document.getElementById('storedResume').value = user.stored_resume;
+                document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from account</div>';
+                localStorage.setItem('jobApplierResume', user.stored_resume);
+              }
+            }
+          }
+        } catch (error) {
+          console.log('Could not load resume from DB:', error);
+        }
       }
     }
 
