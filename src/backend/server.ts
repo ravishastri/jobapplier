@@ -1,9 +1,11 @@
+import http from 'http';
+import { readdirSync } from 'fs';
+
 console.log('Starting server...');
 console.log('Node version:', process.version);
 console.log('CWD:', process.cwd());
-console.log('Files in src/backend:', require('fs').readdirSync('src/backend'));
+console.log('Files in src/backend:', readdirSync('src/backend'));
 
-import http from 'http';
 const PORT = process.env.PORT || 3001;
 
 const server = http.createServer((req, res) => {
