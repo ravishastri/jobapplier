@@ -26,6 +26,9 @@
     button { padding: 12px 20px; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; width: 100%; }
     .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+    .btn-secondary { background: #f0f0f0; color: #333; margin-top: 10px; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .btn-small { padding: 8px 12px; font-size: 0.85em; width: auto; display: inline-block; margin-right: 10px; }
     .loading { text-align: center; color: #667eea; font-weight: 600; }
     .spinner { display: inline-block; animation: spin 1s linear infinite; margin-right: 8px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -39,6 +42,9 @@
     .resume-output { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 20px; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.6; color: #333; max-height: 500px; overflow-y: auto; }
     .copy-btn { background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; margin-top: 10px; width: auto; }
     .copy-btn:hover { background: #764ba2; }
+    .badge { display: inline-block; background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; margin-top: 5px; }
+    .button-row { display: flex; gap: 10px; margin-top: 15px; }
+    .button-row button { flex: 1; }
     @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } .answers-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -50,12 +56,27 @@
     </header>
     <div class="grid">
       <div class="card">
-        <h2>📝 Your Profile</h2>
+        <h2>📝 Your Profile (Saved)</h2>
         <div class="input-group">
           <label>Enter your background and key achievements</label>
           <textarea id="profileNotes" placeholder="e.g., Senior React developer with 5 years experience..."></textarea>
         </div>
+        <button class="btn-primary" onclick="saveProfile()">💾 Save Profile</button>
+        <button class="btn-secondary btn-small" onclick="clearProfile()">Clear</button>
+        <div id="profileStatus"></div>
       </div>
+
+      <div class="card">
+        <h2>📄 Your Resume (Stored)</h2>
+        <div class="input-group">
+          <label>Paste your resume here - this will be tailored for each job</label>
+          <textarea id="storedResume" placeholder="Your resume text or markdown..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="saveResume()">💾 Save Resume</button>
+        <button class="btn-secondary btn-small" onclick="clearResume()">Clear</button>
+        <div id="resumeStatus"></div>
+      </div>
+
       <div class="card">
         <h2>💼 Job Description</h2>
         <div class="input-group">
@@ -63,6 +84,7 @@
           <textarea id="jobDescription" placeholder="Senior React Developer needed..."></textarea>
         </div>
       </div>
+
       <div class="card">
         <h2>❓ Application Questions</h2>
         <div class="input-group">
@@ -72,10 +94,12 @@
         <button class="btn-primary" onclick="generateAnswers()">Generate Answers</button>
         <div id="answersMessage"></div>
       </div>
+
       <div class="card">
         <h2>✨ Generated Answers</h2>
         <div id="answersContainer"></div>
       </div>
+
       <div class="card output-section">
         <h2>📄 Tailored Resume</h2>
         <button class="btn-primary" onclick="tailorResume()">Generate Tailored Resume</button>
@@ -84,19 +108,79 @@
       </div>
     </div>
   </div>
+
   <script>
+    // Load saved data on page load
+    window.addEventListener('load', () => {
+      const savedProfile = localStorage.getItem('jobApplierProfile');
+      const savedResume = localStorage.getItem('jobApplierResume');
+      if (savedProfile) {
+        document.getElementById('profileNotes').value = savedProfile;
+        document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from memory</div>';
+      }
+      if (savedResume) {
+        document.getElementById('storedResume').value = savedResume;
+        document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from memory</div>';
+      }
+    });
+
+    function saveProfile() {
+      const profile = document.getElementById('profileNotes').value.trim();
+      if (!profile) {
+        document.getElementById('profileStatus').innerHTML = '<div class="error">⚠️ Please enter your profile first</div>';
+        return;
+      }
+      localStorage.setItem('jobApplierProfile', profile);
+      document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile saved to memory!</div>';
+      setTimeout(() => { document.getElementById('profileStatus').innerHTML = ''; }, 3000);
+    }
+
+    function clearProfile() {
+      if (confirm('Clear saved profile?')) {
+        localStorage.removeItem('jobApplierProfile');
+        document.getElementById('profileNotes').value = '';
+        document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile cleared</div>';
+      }
+    }
+
+    function saveResume() {
+      const resume = document.getElementById('storedResume').value.trim();
+      if (!resume) {
+        document.getElementById('resumeStatus').innerHTML = '<div class="error">⚠️ Please enter your resume first</div>';
+        return;
+      }
+      localStorage.setItem('jobApplierResume', resume);
+      document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved to memory!</div>';
+      setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
+    }
+
+    function clearResume() {
+      if (confirm('Clear saved resume?')) {
+        localStorage.removeItem('jobApplierResume');
+        document.getElementById('storedResume').value = '';
+        document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume cleared</div>';
+      }
+    }
+
     async function generateAnswers() {
-      const profileNotes = document.getElementById('profileNotes').value.trim();
+      const profileNotes = localStorage.getItem('jobApplierProfile') || document.getElementById('profileNotes').value.trim();
       const jobQuestions = document.getElementById('jobQuestions').value.trim();
       const answersContainer = document.getElementById('answersContainer');
       const answersMessage = document.getElementById('answersMessage');
-      if (!profileNotes || !jobQuestions) {
-        answersMessage.innerHTML = '<div class="error">⚠️ Please fill in profile notes and questions</div>';
+
+      if (!profileNotes) {
+        answersMessage.innerHTML = '<div class="error">⚠️ Please save your profile first</div>';
         return;
       }
+      if (!jobQuestions) {
+        answersMessage.innerHTML = '<div class="error">⚠️ Please enter questions</div>';
+        return;
+      }
+
       answersMessage.innerHTML = '<div class="loading"><span class="spinner">⚙️</span>Generating answers...</div>';
       answersContainer.innerHTML = '';
       const questions = jobQuestions.split('\n').map(q => q.trim()).filter(q => q.length > 0);
+
       try {
         const response = await fetch('/api/generate-answers', {
           method: 'POST',
@@ -120,22 +204,31 @@
         answersMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
       }
     }
+
     async function tailorResume() {
-      const profileNotes = document.getElementById('profileNotes').value.trim();
+      const profileNotes = localStorage.getItem('jobApplierProfile') || document.getElementById('profileNotes').value.trim();
+      const storedResume = localStorage.getItem('jobApplierResume') || document.getElementById('storedResume').value.trim();
       const jobDescription = document.getElementById('jobDescription').value.trim();
       const resumeContainer = document.getElementById('resumeContainer');
       const resumeMessage = document.getElementById('resumeMessage');
-      if (!profileNotes || !jobDescription) {
-        resumeMessage.innerHTML = '<div class="error">⚠️ Please fill in profile notes and job description</div>';
+
+      if (!storedResume) {
+        resumeMessage.innerHTML = '<div class="error">⚠️ Please save your resume first</div>';
         return;
       }
+      if (!jobDescription) {
+        resumeMessage.innerHTML = '<div class="error">⚠️ Please enter job description</div>';
+        return;
+      }
+
       resumeMessage.innerHTML = '<div class="loading"><span class="spinner">⚙️</span>Tailoring resume...</div>';
       resumeContainer.innerHTML = '';
+
       try {
         const response = await fetch('/api/tailor-resume', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resume: profileNotes, jobDescription })
+          body: JSON.stringify({ resume: storedResume, jobDescription })
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
@@ -147,6 +240,7 @@
         resumeMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
       }
     }
+
     function copyToClipboard(selector) {
       const element = document.querySelector(selector);
       const text = element.textContent;
