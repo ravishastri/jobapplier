@@ -210,25 +210,16 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
         }
 
         const shouldBeBold = !isCentered && !isBullet && isJobTitle(cleanLine);
-
-        let paragraphConfig: any = {
+        const paragraph = new Paragraph({
           children: createTextRunsWithLinks(cleanLine || '', shouldBeBold),
           spacing: { line: 240, lineRule: 'auto' },
           alignment: isCentered ? 'center' : isBullet ? 'left' : undefined,
+          bullet: isBullet ? {
+            level: 0
+          } : undefined,
+          indent: isBullet ? { left: 360, hanging: 360 } : undefined,
           bold: shouldBeBold
-        };
-
-        if (isBullet) {
-          paragraphConfig.style = 'ListParagraph';
-          paragraphConfig.numPr = { ilvl: 0, numId: 1 };
-          paragraphConfig.indent = { left: 792 };
-        }
-
-        if (shouldBeBold) {
-          paragraphConfig.size = 24;
-        }
-
-        const paragraph = new Paragraph(paragraphConfig);
+        });
 
         paragraphs.push(paragraph);
       });
@@ -323,25 +314,16 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
         }
 
         const shouldBeBold = !isCentered && !isBullet && isJobTitle(cleanLine);
-
-        let paragraphConfig: any = {
+        const paragraph = new Paragraph({
           children: createTextRunsWithLinks(cleanLine || '', shouldBeBold),
           spacing: { line: 240, lineRule: 'auto' },
           alignment: isCentered ? 'center' : isBullet ? 'left' : undefined,
+          bullet: isBullet ? {
+            level: 0
+          } : undefined,
+          indent: isBullet ? { left: 360, hanging: 360 } : undefined,
           bold: shouldBeBold
-        };
-
-        if (isBullet) {
-          paragraphConfig.style = 'ListParagraph';
-          paragraphConfig.numPr = { ilvl: 0, numId: 1 };
-          paragraphConfig.indent = { left: 792 };
-        }
-
-        if (shouldBeBold) {
-          paragraphConfig.size = 24;
-        }
-
-        const paragraph = new Paragraph(paragraphConfig);
+        });
 
         paragraphs.push(paragraph);
       });
