@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 import authRouter, { initializeAuthDB, authenticateToken } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -111,16 +112,35 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
 
     const tailoredResume = textContent.text;
 
-    // Save to local folder
+    // Save to local folder as Word document
     try {
       const tailoredDir = path.join(__dirname, '../../tailored-resumes');
       await fs.mkdir(tailoredDir, { recursive: true });
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-      const filename = `tailored-resume-${timestamp}-${Date.now()}.txt`;
+      const filename = `tailored-resume-${timestamp}-${Date.now()}.docx`;
       const filepath = path.join(tailoredDir, filename);
 
-      await fs.writeFile(filepath, tailoredResume, 'utf-8');
+      // Parse the resume text into paragraphs
+      const lines = tailoredResume.split('\n');
+      const paragraphs = lines.map(line =>
+        new Paragraph({
+          text: line || '',
+          spacing: { line: 240, lineRule: 'auto' }
+        })
+      );
+
+      // Create Word document
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: paragraphs
+        }]
+      });
+
+      // Write to file
+      const buffer = await Packer.toBuffer(doc);
+      await fs.writeFile(filepath, buffer);
       console.log(`✅ Tailored resume saved to: ${filepath}`);
     } catch (saveError) {
       console.error('Warning: Could not save tailored resume locally:', saveError);
