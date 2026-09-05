@@ -3,12 +3,40 @@ import Anthropic from '@anthropic-ai/sdk';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { Document, Packer, Paragraph, TextRun, ExternalHyperlink } from 'docx';
 import authRouter, { initializeAuthDB, authenticateToken } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Helper function to parse text and create runs with hyperlinks
+function createTextRunsWithLinks(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, idx) => {
+    if (part.match(urlRegex)) {
+      // It's a URL - create a hyperlink
+      return new ExternalHyperlink({
+        children: [
+          new TextRun({
+            text: part,
+            color: '0563C1',
+            underline: { type: 'single' }
+          })
+        ],
+        link: part
+      });
+    } else {
+      // Regular text
+      return new TextRun({
+        text: part,
+        bold: false
+      });
+    }
+  });
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../..', 'public')));
@@ -176,12 +204,7 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
         }
 
         const paragraph = new Paragraph({
-          children: [
-            new TextRun({
-              text: cleanLine || '',
-              bold: false
-            })
-          ],
+          children: createTextRunsWithLinks(cleanLine || ''),
           spacing: { line: 240, lineRule: 'auto' },
           alignment: isCentered ? 'center' : undefined,
           bullet: isBullet ? {
@@ -283,12 +306,7 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
         }
 
         const paragraph = new Paragraph({
-          children: [
-            new TextRun({
-              text: cleanLine || '',
-              bold: false
-            })
-          ],
+          children: createTextRunsWithLinks(cleanLine || ''),
           spacing: { line: 240, lineRule: 'auto' },
           alignment: isCentered ? 'center' : undefined,
           bullet: isBullet ? {
@@ -353,12 +371,7 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
       }
 
       const paragraph = new Paragraph({
-        children: [
-          new TextRun({
-            text: cleanLine || '',
-            bold: false
-          })
-        ],
+        children: createTextRunsWithLinks(cleanLine || ''),
         spacing: { line: 240, lineRule: 'auto' },
         alignment: isCentered ? 'center' : undefined,
         bullet: isBullet ? {
