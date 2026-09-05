@@ -2,14 +2,10 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { query } from './db';
 import { chromium } from 'playwright';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -857,9 +853,10 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../../dist/frontend')));
+  const frontendPath = path.join(process.cwd(), 'dist/frontend');
+  app.use(express.static(frontendPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../dist/frontend/index.html'));
+    res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
 
