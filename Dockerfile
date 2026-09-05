@@ -8,7 +8,7 @@ RUN echo "Build timestamp: $(date)"
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with clean cache
+# Install dependencies with clean cache - rebuild v2
 RUN npm cache clean --force && npm ci --only=production && npm install tsx
 
 # Copy source code
