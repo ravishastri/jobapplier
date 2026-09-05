@@ -128,39 +128,63 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
 
       // Parse the resume text into paragraphs with formatting
       const lines = tailoredResume.split('\n');
-      const paragraphs = lines.map(line => {
-        const trimmedLine = line.trim();
+      const paragraphs = [];
+      let headerIndex = 0;
+      let sectionHeaderCount = 0;
 
-        // Check if line should be centered (Name, section headers like AREAS OF EXPERTISE, EXPERIENCE)
-        const isCentered = /^[A-Z][a-zA-Z\s]*$/.test(trimmedLine) &&
-                          (trimmedLine.length < 60) &&
-                          (trimmedLine.includes('EXPERTISE') ||
-                           trimmedLine.includes('EXPERIENCE') ||
-                           trimmedLine.includes('EDUCATION') ||
-                           trimmedLine.includes('SKILLS') ||
-                           trimmedLine === trimmedLine.toUpperCase() && trimmedLine.split(' ').length <= 4);
+      lines.forEach((line, idx) => {
+        const trimmedLine = line.trim();
+        const isEmpty = !trimmedLine;
+
+        // Check if line is a section header (AREAS OF EXPERTISE, EXPERIENCE, etc)
+        const isSectionHeader = /^[A-Z][A-Z\s]*$/.test(trimmedLine) &&
+                               (trimmedLine.length < 60) &&
+                               (trimmedLine.includes('EXPERTISE') ||
+                                trimmedLine.includes('EXPERIENCE') ||
+                                trimmedLine.includes('EDUCATION') ||
+                                trimmedLine.includes('SKILLS'));
+
+        // Center first 3 non-empty lines (Name, title, contact)
+        let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3;
+
+        // After AREAS OF EXPERTISE header, center the next 2 non-empty lines
+        if (isSectionHeader && trimmedLine.includes('EXPERTISE')) {
+          headerIndex = idx;
+        }
+        if (headerIndex > 0 && idx > headerIndex && idx <= headerIndex + 2 && !isEmpty && !isSectionHeader) {
+          isCentered = true;
+        }
+
+        // Check if line is a section header itself
+        if (isSectionHeader) {
+          isCentered = true;
+          sectionHeaderCount++;
+        }
 
         // Check if line is a bullet point
         const isBullet = trimmedLine.startsWith('-') || trimmedLine.startsWith('•');
         const cleanLine = trimmedLine.replace(/^[-•]\s*/, '').trim();
 
-        // Import AlignmentType from docx if using bullets
-        const alignment = isCentered ? 'center' : undefined;
+        if (!isEmpty) {
+          headerIndex++;
+        }
 
-        return new Paragraph({
+        const paragraph = new Paragraph({
           children: [
             new TextRun({
               text: cleanLine || '',
-              bold: false // Remove all bold by default
+              bold: false
             })
           ],
           spacing: { line: 240, lineRule: 'auto' },
-          alignment: alignment,
+          alignment: isCentered ? 'center' : undefined,
           bullet: isBullet ? {
             level: 0
           } : undefined,
           indent: isBullet ? { left: 720, hanging: 360 } : undefined
         });
+
+        paragraphs.push(paragraph);
       });
 
       // Create Word document
@@ -197,23 +221,48 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
 
     // Parse the resume text into paragraphs with formatting
     const lines = resumeText.split('\n');
-    const paragraphs = lines.map(line => {
-      const trimmedLine = line.trim();
+    const paragraphs = [];
+    let headerIndex = 0;
+    let sectionHeaderCount = 0;
 
-      // Check if line should be centered (Name, section headers)
-      const isCentered = /^[A-Z][a-zA-Z\s]*$/.test(trimmedLine) &&
-                        (trimmedLine.length < 60) &&
-                        (trimmedLine.includes('EXPERTISE') ||
-                         trimmedLine.includes('EXPERIENCE') ||
-                         trimmedLine.includes('EDUCATION') ||
-                         trimmedLine.includes('SKILLS') ||
-                         trimmedLine === trimmedLine.toUpperCase() && trimmedLine.split(' ').length <= 4);
+    lines.forEach((line, idx) => {
+      const trimmedLine = line.trim();
+      const isEmpty = !trimmedLine;
+
+      // Check if line is a section header (AREAS OF EXPERTISE, EXPERIENCE, etc)
+      const isSectionHeader = /^[A-Z][A-Z\s]*$/.test(trimmedLine) &&
+                             (trimmedLine.length < 60) &&
+                             (trimmedLine.includes('EXPERTISE') ||
+                              trimmedLine.includes('EXPERIENCE') ||
+                              trimmedLine.includes('EDUCATION') ||
+                              trimmedLine.includes('SKILLS'));
+
+      // Center first 3 non-empty lines (Name, title, contact)
+      let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3;
+
+      // After AREAS OF EXPERTISE header, center the next 2 non-empty lines
+      if (isSectionHeader && trimmedLine.includes('EXPERTISE')) {
+        headerIndex = idx;
+      }
+      if (headerIndex > 0 && idx > headerIndex && idx <= headerIndex + 2 && !isEmpty && !isSectionHeader) {
+        isCentered = true;
+      }
+
+      // Check if line is a section header itself
+      if (isSectionHeader) {
+        isCentered = true;
+        sectionHeaderCount++;
+      }
 
       // Check if line is a bullet point
       const isBullet = trimmedLine.startsWith('-') || trimmedLine.startsWith('•');
       const cleanLine = trimmedLine.replace(/^[-•]\s*/, '').trim();
 
-      return new Paragraph({
+      if (!isEmpty) {
+        headerIndex++;
+      }
+
+      const paragraph = new Paragraph({
         children: [
           new TextRun({
             text: cleanLine || '',
@@ -227,6 +276,8 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
         } : undefined,
         indent: isBullet ? { left: 720, hanging: 360 } : undefined
       });
+
+      paragraphs.push(paragraph);
     });
 
     // Create Word document
