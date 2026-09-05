@@ -40,7 +40,9 @@
       "Bash(pkill -f \"npm run server\")",
       "Bash(git reset *)",
       "Read(//Users/ravishastri/Tailored/**)",
-      "Bash(unzip -q /Users/ravishastri/Tailored/Resume.docx)"
+      "Bash(unzip -q /Users/ravishastri/Tailored/Resume.docx)",
+      "Bash(unzip -q '/Users/ravishastri/Downloads/tailored-resume-2026-09-05 \\(3\\).docx')",
+      "Bash(python3 *)"
     ]
   }
 }

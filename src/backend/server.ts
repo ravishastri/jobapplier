@@ -184,18 +184,10 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
                                 trimmedLine.includes('EDUCATION') ||
                                 trimmedLine.includes('SKILLS'));
 
-        // Center first 3 non-empty lines (Name, title, contact)
-        let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3;
+        // Center only the very first section (name/title/contact at top)
+        let isCentered = sectionHeaderCount === 0 && !isEmpty && headerIndex < 3 && !isJobTitle(trimmedLine);
 
-        // After AREAS OF EXPERTISE header, center the next 2 non-empty lines
-        if (isSectionHeader && trimmedLine.includes('EXPERTISE')) {
-          headerIndex = idx;
-        }
-        if (headerIndex > 0 && idx > headerIndex && idx <= headerIndex + 2 && !isEmpty && !isSectionHeader) {
-          isCentered = true;
-        }
-
-        // Check if line is a section header itself
+        // Center section headers only (EXPERIENCE, EDUCATION, etc)
         if (isSectionHeader) {
           isCentered = true;
           sectionHeaderCount++;
