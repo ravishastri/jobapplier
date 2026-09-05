@@ -37,7 +37,10 @@
       "Bash(curl -s -X POST https://jobapplier-production.up.railway.app/api/generate-answers -H 'Content-Type: application/json' -d '{ *)",
       "Bash(npm list *)",
       "Bash(npm install *)",
-      "Bash(pkill -f \"npm run server\")"
+      "Bash(pkill -f \"npm run server\")",
+      "Bash(git reset *)",
+      "Read(//Users/ravishastri/Tailored/**)",
+      "Bash(unzip -q /Users/ravishastri/Tailored/Resume.docx)"
     ]
   }
 }
