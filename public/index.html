@@ -202,49 +202,47 @@
 
         // Parse resume and auto-fill fields
         try {
-          const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          const lines = content.split('\n');
+          let name = '', email = '', phone = '', linkedin = '';
+          let experience = '', education = '', skills = '';
 
-          let name = '', email = '', phone = '', location = '', linkedin = '';
-          let summary = '', experience = '', education = '', skills = '', certs = '';
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
 
-          let currentSection = '';
-          let sectionContent = [];
-
-          for (const line of lines) {
-            // Extract contact info from first few lines
-            if (line.includes('@')) {
-              email = line.replace(/.*(<|:)?\s*/, '').replace(/\s*(>)?.*/, '').trim();
-            }
-            if (line.match(/\+?1?\s*\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)) {
-              phone = line.match(/\+?1?\s*\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)[0];
-            }
-            if (line.toLowerCase().includes('linkedin') || line.includes('linkedin.com')) {
-              linkedin = line.replace(/.*linkedin.*:\s*/i, '').trim();
+            // Extract email (look for @)
+            if (!email && line.includes('@')) {
+              const emailMatch = line.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+              if (emailMatch) email = emailMatch[0];
             }
 
-            // Detect sections
-            if (line.match(/^(SUMMARY|PROFESSIONAL SUMMARY|OBJECTIVE)/i)) {
-              currentSection = 'summary';
-              sectionContent = [];
-            } else if (line.match(/^(EXPERIENCE|WORK EXPERIENCE|EMPLOYMENT)/i)) {
-              currentSection = 'experience';
-              sectionContent = [];
-            } else if (line.match(/^(EDUCATION|TRAINING)/i)) {
-              currentSection = 'education';
-              sectionContent = [];
-            } else if (line.match(/^(SKILLS|TECHNICAL SKILLS|COMPETENCIES)/i)) {
-              currentSection = 'skills';
-              sectionContent = [];
-            } else if (line.match(/^(CERTIFICATIONS|CERTIFICATES|LICENSES)/i)) {
-              currentSection = 'certs';
-              sectionContent = [];
-            } else if (currentSection && !line.match(/^[A-Z\s]+$/)) {
-              sectionContent.push(line);
+            // Extract phone (look for phone pattern)
+            if (!phone && line.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\+\d+\s?\d+/)) {
+              const phoneMatch = line.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\+\d+\s?\d+/);
+              if (phoneMatch) phone = phoneMatch[0];
             }
 
-            // Extract name (usually first line with proper capitalization)
-            if (!name && line.match(/^[A-Z][a-z]+ [A-Z][a-z]+/) && !line.includes('@')) {
-              name = line;
+            // Extract LinkedIn
+            if (!linkedin && (line.includes('linkedin.com') || line.includes('linkedin'))) {
+              const linkedinMatch = line.match(/(https?:\/\/)?(www\.)?linkedin\.com[^\s]*/i);
+              if (linkedinMatch) linkedin = linkedinMatch[0];
+            }
+
+            // Extract name (first 1-2 capitalized words)
+            if (!name && line.length > 0 && line.length < 50 && i < 5) {
+              if (line.match(/^[A-Z][a-z]+(\s[A-Z][a-z]+)?$/) && !line.includes('@')) {
+                name = line;
+              }
+            }
+
+            // Collect section content
+            if (line.match(/EXPERIENCE|WORK HISTORY/i)) {
+              experience = lines.slice(i + 1, Math.min(i + 10, lines.length)).join('\n').trim();
+            }
+            if (line.match(/EDUCATION/i)) {
+              education = lines.slice(i + 1, Math.min(i + 5, lines.length)).join('\n').trim();
+            }
+            if (line.match(/SKILLS|TECHNICAL/i)) {
+              skills = lines.slice(i + 1, Math.min(i + 8, lines.length)).join('\n').trim();
             }
           }
 
@@ -253,15 +251,16 @@
           if (email) document.getElementById('resumeEmail').value = email;
           if (phone) document.getElementById('resumePhone').value = phone;
           if (linkedin) document.getElementById('resumeLinkedin').value = linkedin;
-          if (sectionContent.length > 0 && currentSection === 'summary') {
-            document.getElementById('resumeSummary').value = sectionContent.join('\n');
-          }
+          if (experience) document.getElementById('resumeExperience').value = experience;
+          if (education) document.getElementById('resumeEducation').value = education;
+          if (skills) document.getElementById('resumeSkills').value = skills;
 
-          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Resume loaded! Fields auto-filled with extracted data.</div>';
+          const extracted = [name, email, phone, linkedin].filter(x => x).length;
+          document.getElementById('fileStatus').innerHTML = `<div class="success">✅ Resume loaded! (${extracted} fields auto-filled)</div>`;
           setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 4000);
         } catch (err) {
           console.error('Parse error:', err);
-          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Resume format stored (auto-fill partial)</div>';
+          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format stored</div>';
           setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 3000);
         }
       };
