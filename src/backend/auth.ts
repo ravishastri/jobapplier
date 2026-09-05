@@ -20,7 +20,7 @@ export async function initializeAuthDB() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     await query(`
       CREATE TABLE IF NOT EXISTS application_history (
         id SERIAL PRIMARY KEY,
@@ -32,48 +32,35 @@ export async function initializeAuthDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
+    await ensureDefaultUser();
     console.log('✅ Auth tables initialized');
   } catch (error) {
     console.error('Auth DB init error:', error);
   }
 }
 
-// Signup
-router.post('/signup', async (req, res) => {
+// Ensure default user exists
+async function ensureDefaultUser() {
   try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
+    const defaultEmail = process.env.DEFAULT_USER_EMAIL || 'user@example.com';
+    const defaultPassword = process.env.DEFAULT_USER_PASSWORD || 'password123';
+
+    const userExists = await query('SELECT id FROM users WHERE email = $1', [defaultEmail]);
+
+    if (!userExists.rows.length) {
+      const passwordHash = await bcryptjs.hash(defaultPassword, 10);
+      await query(
+        'INSERT INTO users (email, password_hash) VALUES ($1, $2)',
+        [defaultEmail, passwordHash]
+      );
+      console.log(`✅ Default user created: ${defaultEmail}`);
     }
-    
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-    
-    const passwordHash = await bcryptjs.hash(password, 10);
-    
-    const result = await query(
-      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-      [email, passwordHash]
-    );
-    
-    if (!result.rows.length) {
-      return res.status(500).json({ error: 'Failed to create user' });
-    }
-    
-    const user = result.rows[0];
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
-    
-    res.json({ token, user: { id: user.id, email: user.email } });
-  } catch (error: any) {
-    if (error.message.includes('unique constraint')) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-    res.status(500).json({ error: String(error) });
+  } catch (error) {
+    console.error('Error creating default user:', error);
   }
-});
+}
+
 
 // Login
 router.post('/login', async (req, res) => {
