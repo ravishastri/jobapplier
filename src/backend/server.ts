@@ -74,14 +74,16 @@ app.post('/api/generate-answers', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'questions array required' });
     }
 
-    const prompt = `You are helping someone fill out a job application. Here is the context about them:
+    const prompt = `Write straightforward, humble job application answers. No fluff, no flowery language, no made-up anecdotes. Be direct and authentic.
+
+Background:
 ${context || 'No additional context provided'}
 
-Please answer the following ${questions.length} question(s) professionally and concisely:
+Answer these questions. Keep each answer brief, grounded, and honest:
 
 ${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
-Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
+Return JSON with keys: answer_1, answer_2, etc. Answers should sound like a real person typing, not polished marketing copy.`;
 
     const response = await client.messages.create({
       model: 'claude-opus-5',
