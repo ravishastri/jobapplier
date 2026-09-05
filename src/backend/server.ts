@@ -160,11 +160,10 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
 
     // Save to local folder as Word document
     try {
-      const tailoredDir = path.join(__dirname, '../../tailored-resumes');
+      const tailoredDir = path.join(process.env.HOME || '/root', 'Tailored');
       await fs.mkdir(tailoredDir, { recursive: true });
 
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-      const filename = `tailored-resume-${timestamp}-${Date.now()}.docx`;
+      const filename = 'Resume.docx';
       const filepath = path.join(tailoredDir, filename);
 
       // Parse the resume text into paragraphs with formatting
