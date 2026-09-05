@@ -362,7 +362,8 @@
           </div>
           <div class="action-buttons" style="margin-top: 20px;">
             <button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy Tailored</button>
-            <button class="action-btn" onclick="downloadResume()">⬇️ Download Tailored</button>
+            <button class="action-btn" onclick="downloadResume()">⬇️ Download as TXT</button>
+            <button class="action-btn" onclick="downloadResumeAsWord()">📄 Download as WORD</button>
           </div>
         `;
         resumeContainer.innerHTML = resumeHtml;
@@ -398,6 +399,32 @@
       link.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
+    }
+
+    async function downloadResumeAsWord() {
+      if (!fullTailoredResume) {
+        alert('No resume to download');
+        return;
+      }
+      try {
+        const response = await fetch('/api/download-resume-word', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ resumeText: fullTailoredResume })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tailored-resume-${new Date().toISOString().split('T')[0]}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      } catch (error) {
+        alert('❌ Error downloading Word document: ' + error.message);
+      }
     }
   </script>
 </body>

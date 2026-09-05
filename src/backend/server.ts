@@ -163,8 +163,57 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
   }
 });
 
+// Download tailored resume as Word document
+app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
+  try {
+    const { resumeText } = req.body;
+
+    if (!resumeText) {
+      return res.status(400).json({ error: 'resumeText required' });
+    }
+
+    // Parse the resume text into paragraphs with formatting
+    const lines = resumeText.split('\n');
+    const paragraphs = lines.map(line => {
+      const isBold = line.match(/^[A-Z][A-Z\s]+$/) && line.length < 100;
+      const isBullet = line.trim().startsWith('-') || line.trim().startsWith('•');
+      const cleanLine = line.replace(/^[-•]\s*/, '');
+
+      return new Paragraph({
+        children: [
+          new TextRun({
+            text: cleanLine || '',
+            bold: isBold
+          })
+        ],
+        spacing: { line: 240, lineRule: 'auto' },
+        indent: isBullet ? { left: 720 } : undefined
+      });
+    });
+
+    // Create Word document
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: paragraphs
+      }]
+    });
+
+    // Convert to buffer and send
+    const buffer = await Packer.toBuffer(doc);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="tailored-resume-${new Date().toISOString().split('T')[0]}.docx"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error creating Word document:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
   console.log(`POST /api/generate-answers - Generate answers to questions`);
   console.log(`POST /api/tailor-resume - Tailor resume to job description`);
+  console.log(`POST /api/download-resume-word - Download resume as Word document`);
 });
