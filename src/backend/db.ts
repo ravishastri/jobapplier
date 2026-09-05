@@ -1,9 +1,6 @@
 import postgres from 'postgres';
 import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import path from 'path';
 
 const sql = process.env.DATABASE_URL
   ? postgres(process.env.DATABASE_URL)
@@ -32,7 +29,8 @@ export async function query(text: string, params?: any[]) {
 export async function initializeDatabase() {
   try {
     console.log('Initializing database schema...');
-    const schema = readFileSync(`${__dirname}/../../db/schema.sql`, 'utf-8');
+    const schemaPath = path.join(process.cwd(), 'db', 'schema.sql');
+    const schema = readFileSync(schemaPath, 'utf-8');
     const statements = schema
       .split(';')
       .map(s => s.trim())
