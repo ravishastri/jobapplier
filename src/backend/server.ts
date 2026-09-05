@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Helper function to parse text and create runs with hyperlinks
-function createTextRunsWithLinks(text: string) {
+function createTextRunsWithLinks(text: string, isBold: boolean = false) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
 
@@ -23,7 +23,8 @@ function createTextRunsWithLinks(text: string) {
           new TextRun({
             text: part,
             color: '0563C1',
-            underline: { type: 'single' }
+            underline: { type: 'single' },
+            bold: isBold
           })
         ],
         link: part
@@ -32,10 +33,16 @@ function createTextRunsWithLinks(text: string) {
       // Regular text
       return new TextRun({
         text: part,
-        bold: false
+        bold: isBold
       });
     }
   });
+}
+
+// Helper to detect if a line is a job title
+function isJobTitle(line: string): boolean {
+  const jobKeywords = ['Engineer', 'Manager', 'Lead', 'Developer', 'Architect', 'Specialist', 'Analyst', 'Director', 'Senior', 'Junior', 'Principal', 'VP', 'Officer', 'Executive', 'Consultant'];
+  return jobKeywords.some(keyword => line.includes(keyword));
 }
 
 app.use(express.json());
@@ -203,14 +210,16 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
           headerIndex++;
         }
 
+        const shouldBeBold = !isCentered && !isBullet && isJobTitle(cleanLine);
         const paragraph = new Paragraph({
-          children: createTextRunsWithLinks(cleanLine || ''),
+          children: createTextRunsWithLinks(cleanLine || '', shouldBeBold),
           spacing: { line: 240, lineRule: 'auto' },
           alignment: isCentered ? 'center' : isBullet ? 'left' : undefined,
           bullet: isBullet ? {
             level: 0
           } : undefined,
-          indent: isBullet ? { left: 360, hanging: 360 } : undefined
+          indent: isBullet ? { left: 360, hanging: 360 } : undefined,
+          bold: shouldBeBold
         });
 
         paragraphs.push(paragraph);
@@ -305,14 +314,16 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
           headerIndex++;
         }
 
+        const shouldBeBold = !isCentered && !isBullet && isJobTitle(cleanLine);
         const paragraph = new Paragraph({
-          children: createTextRunsWithLinks(cleanLine || ''),
+          children: createTextRunsWithLinks(cleanLine || '', shouldBeBold),
           spacing: { line: 240, lineRule: 'auto' },
           alignment: isCentered ? 'center' : isBullet ? 'left' : undefined,
           bullet: isBullet ? {
             level: 0
           } : undefined,
-          indent: isBullet ? { left: 360, hanging: 360 } : undefined
+          indent: isBullet ? { left: 360, hanging: 360 } : undefined,
+          bold: shouldBeBold
         });
 
         paragraphs.push(paragraph);
