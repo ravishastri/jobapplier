@@ -77,6 +77,7 @@ export default function JobsList() {
     job_url: ''
   });
   const [addingJob, setAddingJob] = useState(false);
+  const [updatingJobStatus, setUpdatingJobStatus] = useState<number | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -246,6 +247,22 @@ export default function JobsList() {
     }
   };
 
+  const handleUpdateJobStatus = async (jobId: number, field: 'applied' | 'recruiter_contacted') => {
+    setUpdatingJobStatus(jobId);
+    try {
+      await axios.post(`http://localhost:3001/api/jobs/${jobId}/update-status`, {
+        field,
+        value: field === 'applied' ? new Date().toISOString() : new Date().toISOString()
+      });
+      setTimeout(fetchJobs, 500);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating status');
+    } finally {
+      setUpdatingJobStatus(null);
+    }
+  };
+
   return (
     <div className="panel">
       <div className="panel-header">
@@ -304,6 +321,26 @@ export default function JobsList() {
                 <a href={job.job_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
                   View Job
                 </a>
+              </div>
+
+              <div className="job-tracking" style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0', display: 'flex', gap: '20px', fontSize: '14px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={job.applied > 0}
+                    onChange={() => handleUpdateJobStatus(job.id, 'applied')}
+                    disabled={updatingJobStatus === job.id}
+                  />
+                  <span>Applied</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    onChange={() => handleUpdateJobStatus(job.id, 'recruiter_contacted')}
+                    disabled={updatingJobStatus === job.id}
+                  />
+                  <span>Reached out to recruiter</span>
+                </label>
               </div>
             </div>
           ))

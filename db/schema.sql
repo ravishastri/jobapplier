@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS applications (
   resume_id INTEGER REFERENCES resumes(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   applied_at TIMESTAMP,
+  recruiter_contacted_at TIMESTAMP,
   status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'applied', 'rejected', 'interview', 'offer'
   agent_score INTEGER, -- 0-100 score from agent evaluation
   agent_decision TEXT, -- reasoning from agent (why apply/skip)
@@ -92,6 +93,9 @@ CREATE TABLE IF NOT EXISTS agent_feedback (
   user_feedback TEXT, -- why the user changed it
   category VARCHAR(100) -- inferred category for learning
 );
+
+-- Add recruiter_contacted_at column if it doesn't exist
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS recruiter_contacted_at TIMESTAMP;
 
 CREATE INDEX IF NOT EXISTS idx_job_postings_company ON job_postings(company);
 CREATE INDEX IF NOT EXISTS idx_job_postings_title ON job_postings(title);

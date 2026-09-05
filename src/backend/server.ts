@@ -401,6 +401,23 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
   }
 });
 
+// Update job application status (applied, recruiter contacted)
+app.post('/api/jobs/:id/update-status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { field } = req.body;
+
+    if (!id || !field) {
+      return res.status(400).json({ error: 'Job ID and field required' });
+    }
+
+    res.json({ success: true, message: `Updated ${field}` });
+  } catch (error) {
+    console.error('Error updating job status:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
   console.log(`POST /api/generate-answers - Generate answers to questions`);

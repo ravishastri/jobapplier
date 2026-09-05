@@ -36,7 +36,8 @@
       "Bash(curl -s https://jobapplier-production.up.railway.app/)",
       "Bash(curl -s -X POST https://jobapplier-production.up.railway.app/api/generate-answers -H 'Content-Type: application/json' -d '{ *)",
       "Bash(npm list *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(pkill -f \"npm run server\")"
     ]
   }
 }
