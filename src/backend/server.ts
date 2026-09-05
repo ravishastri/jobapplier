@@ -862,14 +862,7 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
   }
 });
 
-// Serve frontend static files in production
-if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(process.cwd(), 'dist/frontend');
-  app.use(express.static(frontendPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-}
+// Frontend static file serving disabled for now
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
