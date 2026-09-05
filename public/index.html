@@ -198,82 +198,113 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target.result;
-        resumeFormat = content; // Store original format
+        resumeFormat = content;
 
-        // Parse resume and auto-fill fields
         try {
           const lines = content.split('\n');
-          let name = '', email = '', phone = '', linkedin = '';
-          let summary = '', experience = '', education = '', skills = '', certs = '', projects = '';
+          let extracted = 0;
 
+          // Simple extraction - look for patterns
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
 
-            // Extract email (look for @)
-            if (!email && line.includes('@')) {
-              const emailMatch = line.match(/[\w\.-]+@[\w\.-]+\.\w+/);
-              if (emailMatch) email = emailMatch[0];
+            // Email
+            const emailMatch = line.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+            if (emailMatch && !document.getElementById('resumeEmail').value) {
+              document.getElementById('resumeEmail').value = emailMatch[0];
+              extracted++;
             }
 
-            // Extract phone (look for phone pattern)
-            if (!phone && line.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\+\d+\s?\d+/)) {
-              const phoneMatch = line.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\+\d+\s?\d+/);
-              if (phoneMatch) phone = phoneMatch[0];
+            // Phone - multiple formats
+            const phoneMatch = line.match(/(\d{3}[-.]?\d{3}[-.]?\d{4})|(\(\d{3}\)\s?\d{3}[-.]?\d{4})/);
+            if (phoneMatch && !document.getElementById('resumePhone').value) {
+              document.getElementById('resumePhone').value = phoneMatch[0];
+              extracted++;
             }
 
-            // Extract LinkedIn
-            if (!linkedin && (line.includes('linkedin.com') || line.includes('linkedin'))) {
-              const linkedinMatch = line.match(/(https?:\/\/)?(www\.)?linkedin\.com[^\s]*/i);
-              if (linkedinMatch) linkedin = linkedinMatch[0];
-            }
-
-            // Extract name (first 1-2 capitalized words)
-            if (!name && line.length > 0 && line.length < 50 && i < 5) {
-              if (line.match(/^[A-Z][a-z]+(\s[A-Z][a-z]+)?$/) && !line.includes('@')) {
-                name = line;
+            // LinkedIn
+            if ((line.includes('linkedin.com') || line.includes('linkedin.in')) && !document.getElementById('resumeLinkedin').value) {
+              const url = line.match(/https?:\/\/[^\s]+/);
+              if (url) {
+                document.getElementById('resumeLinkedin').value = url[0];
+                extracted++;
               }
             }
 
-            // Collect section content
-            if (line.match(/SUMMARY|OBJECTIVE|PROFESSIONAL SUMMARY/i)) {
-              summary = lines.slice(i + 1, Math.min(i + 4, lines.length)).join('\n').trim();
+            // Name - capitalize words on first few lines
+            if (i < 3 && line.length > 3 && line.length < 50 && !line.includes('@')) {
+              if (!document.getElementById('resumeFullName').value && line.match(/^[A-Z]/)) {
+                document.getElementById('resumeFullName').value = line;
+                extracted++;
+              }
             }
-            if (line.match(/EXPERIENCE|WORK HISTORY|EMPLOYMENT/i)) {
-              experience = lines.slice(i + 1, Math.min(i + 10, lines.length)).join('\n').trim();
+
+            // Summary after SUMMARY keyword
+            if (line.match(/^SUMMARY/i) && !document.getElementById('resumeSummary').value) {
+              const summaryLines = [];
+              for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+                if (lines[j].trim() && !lines[j].match(/^[A-Z\s]+$/)) {
+                  summaryLines.push(lines[j].trim());
+                }
+              }
+              if (summaryLines.length > 0) {
+                document.getElementById('resumeSummary').value = summaryLines.join('\n');
+                extracted++;
+              }
             }
-            if (line.match(/EDUCATION|TRAINING/i)) {
-              education = lines.slice(i + 1, Math.min(i + 5, lines.length)).join('\n').trim();
+
+            // Experience
+            if (line.match(/^EXPERIENCE/i) && !document.getElementById('resumeExperience').value) {
+              const expLines = [];
+              for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
+                if (lines[j].trim() && !lines[j].match(/^[A-Z\s]+$/)) {
+                  expLines.push(lines[j].trim());
+                }
+              }
+              if (expLines.length > 0) {
+                document.getElementById('resumeExperience').value = expLines.join('\n');
+                extracted++;
+              }
             }
-            if (line.match(/SKILLS|TECHNICAL|COMPETENCIES/i)) {
-              skills = lines.slice(i + 1, Math.min(i + 8, lines.length)).join('\n').trim();
+
+            // Education
+            if (line.match(/^EDUCATION/i) && !document.getElementById('resumeEducation').value) {
+              const eduLines = [];
+              for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+                if (lines[j].trim() && !lines[j].match(/^[A-Z\s]+$/)) {
+                  eduLines.push(lines[j].trim());
+                }
+              }
+              if (eduLines.length > 0) {
+                document.getElementById('resumeEducation').value = eduLines.join('\n');
+                extracted++;
+              }
             }
-            if (line.match(/CERTIFICATIONS|CERTIFICATES|LICENSES/i)) {
-              certs = lines.slice(i + 1, Math.min(i + 4, lines.length)).join('\n').trim();
-            }
-            if (line.match(/PROJECTS/i)) {
-              projects = lines.slice(i + 1, Math.min(i + 5, lines.length)).join('\n').trim();
+
+            // Skills
+            if (line.match(/^SKILLS/i) && !document.getElementById('resumeSkills').value) {
+              const skillLines = [];
+              for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+                if (lines[j].trim() && !lines[j].match(/^[A-Z\s]+$/)) {
+                  skillLines.push(lines[j].trim());
+                }
+              }
+              if (skillLines.length > 0) {
+                document.getElementById('resumeSkills').value = skillLines.join('\n');
+                extracted++;
+              }
             }
           }
 
-          // Fill form fields
-          if (name) document.getElementById('resumeFullName').value = name;
-          if (email) document.getElementById('resumeEmail').value = email;
-          if (phone) document.getElementById('resumePhone').value = phone;
-          if (linkedin) document.getElementById('resumeLinkedin').value = linkedin;
-          if (summary) document.getElementById('resumeSummary').value = summary;
-          if (experience) document.getElementById('resumeExperience').value = experience;
-          if (education) document.getElementById('resumeEducation').value = education;
-          if (skills) document.getElementById('resumeSkills').value = skills;
-          if (certs) document.getElementById('resumeCerts').value = certs;
-          if (projects) document.getElementById('resumeProjects').value = projects;
-
-          const extracted = [name, email, phone, linkedin, summary, experience].filter(x => x).length;
-          document.getElementById('fileStatus').innerHTML = `<div class="success">✅ Resume loaded! (${extracted} fields auto-filled)</div>`;
+          if (extracted > 0) {
+            document.getElementById('fileStatus').innerHTML = `<div class="success">✅ Resume loaded! (${extracted} fields filled)</div>`;
+          } else {
+            document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format saved (paste content manually if needed)</div>';
+          }
           setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 4000);
         } catch (err) {
-          console.error('Parse error:', err);
-          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format stored</div>';
-          setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 3000);
+          console.error('Error:', err);
+          document.getElementById('fileStatus').innerHTML = '<div class="error">Error reading file</div>';
         }
       };
       reader.readAsText(file);
