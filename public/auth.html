@@ -156,8 +156,9 @@
     function toggleForm() {
       const loginForm = document.getElementById('loginForm');
       const signupForm = document.getElementById('signupForm');
-      loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
-      signupForm.style.display = signupForm.style.display === 'none' ? 'block' : 'none';
+      const isLoginVisible = getComputedStyle(loginForm).display !== 'none';
+      loginForm.style.display = isLoginVisible ? 'none' : 'block';
+      signupForm.style.display = isLoginVisible ? 'block' : 'none';
       document.getElementById('message').innerHTML = '';
     }
 
