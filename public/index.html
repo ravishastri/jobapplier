@@ -160,6 +160,8 @@
   </div>
 
   <script>
+    let fullTailoredResume = ''; // Store full resume text for download
+
     // Load saved data on page load
     window.addEventListener('load', () => {
       const savedProfile = localStorage.getItem('jobApplierProfile');
@@ -358,7 +360,9 @@
         const data = await response.json();
         if (data.error) throw new Error(data.error);
         resumeMessage.innerHTML = '<div class="success">✅ Resume tailored!</div>';
-        const resumeHtml = `<div class="resume-output" id="tailoredResumeText">${data.tailoredResume}</div><div class="action-buttons"><button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy to Clipboard</button><button class="action-btn" onclick="downloadResume()">⬇️ Download Resume</button></div>`;
+        fullTailoredResume = data.tailoredResume; // Store full text for download
+        const escapedResume = data.tailoredResume.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const resumeHtml = `<div class="resume-output" id="tailoredResumeText">${escapedResume}</div><div class="action-buttons"><button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy to Clipboard</button><button class="action-btn" onclick="downloadResume()">⬇️ Download Resume</button></div>`;
         resumeContainer.innerHTML = resumeHtml;
       } catch (error) {
         resumeMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
@@ -366,8 +370,11 @@
     }
 
     function copyToClipboard(selector) {
-      const element = document.querySelector(selector);
-      const text = element.textContent;
+      const text = fullTailoredResume || document.querySelector(selector)?.textContent || '';
+      if (!text) {
+        alert('No text to copy');
+        return;
+      }
       navigator.clipboard.writeText(text).then(() => {
         alert('✅ Copied to clipboard!');
       }).catch(err => {
@@ -376,13 +383,11 @@
     }
 
     function downloadResume() {
-      const element = document.getElementById('tailoredResumeText');
-      if (!element) {
+      if (!fullTailoredResume) {
         alert('No resume to download');
         return;
       }
-      const text = element.textContent;
-      const blob = new Blob([text], { type: 'text/plain' });
+      const blob = new Blob([fullTailoredResume], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
