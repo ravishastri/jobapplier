@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Initialize database in background on startup
-initializeDatabase().catch(err => console.error('Background init error:', err));
+// Initialize database in background on startup (commented out to debug)
+// initializeDatabase().catch(err => console.error('Background init error:', err));
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
