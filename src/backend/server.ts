@@ -2,6 +2,7 @@ import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
 import authRouter, { initializeAuthDB, authenticateToken } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,31 +73,30 @@ Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
 
 app.post('/api/tailor-resume', authenticateToken, async (req, res) => {
   try {
-    const { resume, jobDescription, originalFormat } = req.body;
+    const { resume, jobDescription } = req.body;
 
     if (!resume || !jobDescription) {
       return res.status(400).json({ error: 'resume and jobDescription required' });
     }
 
-    let formatInstructions = '';
-    if (originalFormat) {
-      formatInstructions = `\n\nIMPORTANT: Match the exact formatting style of this original resume:\n${originalFormat}\n\nKeep the same structure, spacing, and style while tailoring the content.`;
-    }
+    const prompt = `You are an expert resume writer. Your task is to tailor a resume to match a job description while preserving the EXACT formatting, structure, and layout of the original.
 
-    const prompt = `You are an expert resume writer. Here is a job description:
+CRITICAL: Keep all formatting exactly as is - including spacing, indentation, line breaks, sections, bullets, and visual structure. Do NOT change the format at all.
 
+Job Description:
 ${jobDescription}
 
-And here is a resume:
-
+Original Resume:
 ${resume}
 
-Please tailor this resume to better match the job description. Focus on:
-1. Reordering bullet points to highlight most relevant experience
-2. Adjusting language to match keywords from the job description
-3. Emphasizing relevant skills and achievements${formatInstructions}
+Please tailor this resume by:
+1. Keeping the exact same structure, sections, and formatting as the original
+2. Replacing or reordering bullet points to highlight most relevant experience for this specific job
+3. Adjusting language to match keywords from the job description
+4. Emphasizing relevant skills and achievements
+5. Maintaining the same visual structure and spacing
 
-Return the tailored resume in plain text format.`;
+Return ONLY the tailored resume in the exact same format as the original. Do not add any explanations or metadata.`;
 
     const response = await client.messages.create({
       model: 'claude-opus-5',
@@ -109,7 +109,24 @@ Return the tailored resume in plain text format.`;
       throw new Error('No text content in response');
     }
 
-    res.json({ tailoredResume: textContent.text });
+    const tailoredResume = textContent.text;
+
+    // Save to local folder
+    try {
+      const tailoredDir = path.join(__dirname, '../../tailored-resumes');
+      await fs.mkdir(tailoredDir, { recursive: true });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const filename = `tailored-resume-${timestamp}-${Date.now()}.txt`;
+      const filepath = path.join(tailoredDir, filename);
+
+      await fs.writeFile(filepath, tailoredResume, 'utf-8');
+      console.log(`✅ Tailored resume saved to: ${filepath}`);
+    } catch (saveError) {
+      console.error('Warning: Could not save tailored resume locally:', saveError);
+    }
+
+    res.json({ tailoredResume });
   } catch (error) {
     console.error('Error tailoring resume:', error);
     res.status(500).json({ error: String(error) });

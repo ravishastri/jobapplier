@@ -345,7 +345,7 @@
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-        resumeMessage.innerHTML = '<div class="success">✅ Resume tailored!</div>';
+        resumeMessage.innerHTML = '<div class="success">✅ Resume tailored and saved locally!</div>';
         fullTailoredResume = data.tailoredResume; // Store full text for download
         const escapedOriginal = storedResume.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const escapedTailored = data.tailoredResume.replace(/</g, '&lt;').replace(/>/g, '&gt;');
