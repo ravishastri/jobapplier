@@ -50,14 +50,25 @@
     .resume-panel.original { border-left: 4px solid #667eea; }
     .resume-panel.tailored { border-left: 4px solid #28a745; }
     .resume-text { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85em; line-height: 1.5; color: #333; max-height: 600px; overflow-y: auto; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .logout-btn { background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.3s; }
+    .logout-btn:hover { background: #c82333; transform: translateY(-2px); }
     @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } .answers-grid { grid-template-columns: 1fr; } .resume-comparison { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>🚀 Job Applier</h1>
-      <p class="subtitle">AI-powered job application assistant</p>
+      <div class="header-top">
+        <div>
+          <h1>🚀 Job Applier</h1>
+          <p class="subtitle">AI-powered job application assistant</p>
+        </div>
+        <div style="text-align: right;">
+          <p id="userEmail" style="color: white; margin-bottom: 8px; font-size: 0.9em;"></p>
+          <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        </div>
+      </div>
     </header>
     <div class="grid">
       <div class="card">
@@ -480,6 +491,17 @@
       const token = localStorage.getItem('token');
       if (!token) {
         window.location.href = '/auth.html';
+      } else {
+        // Display user email in header
+        const user = localStorage.getItem('user');
+        if (user) {
+          try {
+            const userData = JSON.parse(user);
+            document.getElementById('userEmail').textContent = userData.email || 'User';
+          } catch (e) {
+            console.log('Could not parse user data');
+          }
+        }
       }
     });
 
