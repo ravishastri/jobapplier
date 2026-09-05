@@ -166,13 +166,31 @@
       loadResume();
     });
 
-    function saveProfile() {
+    async function saveProfile() {
       const profile = document.getElementById('profileNotes').value.trim();
       if (!profile) {
         document.getElementById('profileStatus').innerHTML = '<div class="error">⚠️ Please enter your profile first</div>';
         return;
       }
+
+      // Save to localStorage
       localStorage.setItem('jobApplierProfile', profile);
+
+      // Save to database
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch('/auth/profile', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ profileNotes: profile, storedResume: localStorage.getItem('jobApplierResume') || document.getElementById('storedResume').value })
+          });
+          if (!response.ok) throw new Error(`API error: ${response.status}`);
+        }
+      } catch (error) {
+        console.log('Error saving to database:', error);
+      }
+
       document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile saved!</div>';
       setTimeout(() => { document.getElementById('profileStatus').innerHTML = ''; }, 3000);
     }
@@ -185,13 +203,31 @@
       }
     }
 
-    function saveResume() {
+    async function saveResume() {
       const resume = document.getElementById('storedResume').value.trim();
       if (!resume) {
         document.getElementById('resumeStatus').innerHTML = '<div class="error">⚠️ Please enter your resume first</div>';
         return;
       }
+
+      // Save to localStorage
       localStorage.setItem('jobApplierResume', resume);
+
+      // Save to database
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch('/auth/profile', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ profileNotes: localStorage.getItem('jobApplierProfile') || document.getElementById('profileNotes').value, storedResume: resume })
+          });
+          if (!response.ok) throw new Error(`API error: ${response.status}`);
+        }
+      } catch (error) {
+        console.log('Error saving to database:', error);
+      }
+
       document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved!</div>';
       setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
     }
