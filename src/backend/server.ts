@@ -37,13 +37,12 @@ Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      console.error('Generate answers - Response type:', content.type, 'Full response:', response);
-      throw new Error(`Unexpected response type: ${content.type}`);
+    const textContent = response.content.find((c: any) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
     }
 
-    let jsonText = content.text;
+    let jsonText = textContent.text;
     const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       jsonText = jsonMatch[1].trim();
@@ -85,13 +84,12 @@ Return the tailored resume in plain text format.`;
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      console.error('Tailor resume - Response type:', content.type, 'Full response:', response);
-      throw new Error(`Unexpected response type: ${content.type}`);
+    const textContent = response.content.find((c: any) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
     }
 
-    res.json({ tailoredResume: content.text });
+    res.json({ tailoredResume: textContent.text });
   } catch (error) {
     console.error('Error tailoring resume:', error);
     res.status(500).json({ error: String(error) });
