@@ -121,14 +121,24 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
       const filename = `tailored-resume-${timestamp}-${Date.now()}.docx`;
       const filepath = path.join(tailoredDir, filename);
 
-      // Parse the resume text into paragraphs
+      // Parse the resume text into paragraphs with formatting
       const lines = tailoredResume.split('\n');
-      const paragraphs = lines.map(line =>
-        new Paragraph({
-          text: line || '',
-          spacing: { line: 240, lineRule: 'auto' }
-        })
-      );
+      const paragraphs = lines.map(line => {
+        const isBold = line.match(/^[A-Z][A-Z\s]+$/) && line.length < 100; // All caps headers
+        const isBullet = line.trim().startsWith('-') || line.trim().startsWith('•');
+        const cleanLine = line.replace(/^[-•]\s*/, ''); // Remove bullet char
+
+        return new Paragraph({
+          children: [
+            new TextRun({
+              text: cleanLine || '',
+              bold: isBold
+            })
+          ],
+          spacing: { line: 240, lineRule: 'auto' },
+          indent: isBullet ? { left: 720 } : undefined
+        });
+      });
 
       // Create Word document
       const doc = new Document({
