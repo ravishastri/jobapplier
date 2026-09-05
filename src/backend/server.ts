@@ -42,7 +42,13 @@ Provide answers in JSON format with keys like "answer_1", "answer_2", etc.`;
       throw new Error('Unexpected response type');
     }
 
-    res.json({ answers: JSON.parse(content.text) });
+    let jsonText = content.text;
+    const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[1].trim();
+    }
+
+    res.json({ answers: JSON.parse(jsonText) });
   } catch (error) {
     console.error('Error generating answers:', error);
     res.status(500).json({ error: String(error) });
