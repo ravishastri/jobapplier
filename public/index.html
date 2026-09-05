@@ -200,28 +200,91 @@
         const content = e.target.result;
         resumeFormat = content; // Store original format
 
-        // Try to parse and auto-fill fields
+        // Parse resume and auto-fill fields
         try {
-          // Simple parsing - look for common sections
-          const lines = content.split('\n');
-          let name = '', email = '', phone = '';
+          const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+          let name = '', email = '', phone = '', location = '', linkedin = '';
+          let summary = '', experience = '', education = '', skills = '', certs = '';
+
+          let currentSection = '';
+          let sectionContent = [];
 
           for (const line of lines) {
-            if (line.includes('@')) email = line.trim();
-            if (line.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/)) phone = line.trim();
+            // Extract contact info from first few lines
+            if (line.includes('@')) {
+              email = line.replace(/.*(<|:)?\s*/, '').replace(/\s*(>)?.*/, '').trim();
+            }
+            if (line.match(/\+?1?\s*\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)) {
+              phone = line.match(/\+?1?\s*\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)[0];
+            }
+            if (line.toLowerCase().includes('linkedin') || line.includes('linkedin.com')) {
+              linkedin = line.replace(/.*linkedin.*:\s*/i, '').trim();
+            }
+
+            // Detect sections
+            if (line.match(/^(SUMMARY|PROFESSIONAL SUMMARY|OBJECTIVE)/i)) {
+              currentSection = 'summary';
+              sectionContent = [];
+            } else if (line.match(/^(EXPERIENCE|WORK EXPERIENCE|EMPLOYMENT)/i)) {
+              currentSection = 'experience';
+              sectionContent = [];
+            } else if (line.match(/^(EDUCATION|TRAINING)/i)) {
+              currentSection = 'education';
+              sectionContent = [];
+            } else if (line.match(/^(SKILLS|TECHNICAL SKILLS|COMPETENCIES)/i)) {
+              currentSection = 'skills';
+              sectionContent = [];
+            } else if (line.match(/^(CERTIFICATIONS|CERTIFICATES|LICENSES)/i)) {
+              currentSection = 'certs';
+              sectionContent = [];
+            } else if (currentSection && !line.match(/^[A-Z\s]+$/)) {
+              sectionContent.push(line);
+            }
+
+            // Extract name (usually first line with proper capitalization)
+            if (!name && line.match(/^[A-Z][a-z]+ [A-Z][a-z]+/) && !line.includes('@')) {
+              name = line;
+            }
           }
 
+          // Fill form fields
+          if (name) document.getElementById('resumeFullName').value = name;
           if (email) document.getElementById('resumeEmail').value = email;
           if (phone) document.getElementById('resumePhone').value = phone;
+          if (linkedin) document.getElementById('resumeLinkedin').value = linkedin;
+          if (sectionContent.length > 0 && currentSection === 'summary') {
+            document.getElementById('resumeSummary').value = sectionContent.join('\n');
+          }
 
-          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format loaded! (Email and phone auto-filled if found)</div>';
-          setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 3000);
+          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Resume loaded! Fields auto-filled with extracted data.</div>';
+          setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 4000);
         } catch (err) {
-          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Format loaded!</div>';
+          console.error('Parse error:', err);
+          document.getElementById('fileStatus').innerHTML = '<div class="success">✅ Resume format stored (auto-fill partial)</div>';
           setTimeout(() => { document.getElementById('fileStatus').innerHTML = ''; }, 3000);
         }
       };
       reader.readAsText(file);
+    }
+
+    async function loadProfileFromDB() {
+      try {
+        const response = await fetch('/auth/me', {
+          headers: getAuthHeaders()
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        if (user.profile_notes) {
+          document.getElementById('profileNotes').value = user.profile_notes;
+          document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from account</div>';
+          localStorage.setItem('jobApplierProfile', user.profile_notes);
+        }
+      } catch (error) {
+        console.log('Could not load profile from DB');
+      }
     }
 
     // Load saved data on page load
@@ -231,18 +294,34 @@
         document.getElementById('profileNotes').value = savedProfile;
         document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from memory</div>';
       }
+      loadProfileFromDB(); // Try to sync from database
       loadResume();
     });
 
-    function saveProfile() {
+    async function saveProfile() {
       const profile = document.getElementById('profileNotes').value.trim();
       if (!profile) {
         document.getElementById('profileStatus').innerHTML = '<div class="error">⚠️ Please enter your profile first</div>';
         return;
       }
-      localStorage.setItem('jobApplierProfile', profile);
-      document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile saved to memory!</div>';
-      setTimeout(() => { document.getElementById('profileStatus').innerHTML = ''; }, 3000);
+
+      try {
+        // Save to database
+        const response = await fetch('/auth/profile', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ profileNotes: profile, storedResume: '' })
+        });
+
+        if (!response.ok) throw new Error('Failed to save profile');
+
+        // Also save locally
+        localStorage.setItem('jobApplierProfile', profile);
+        document.getElementById('profileStatus').innerHTML = '<div class="success">✅ Profile saved!</div>';
+        setTimeout(() => { document.getElementById('profileStatus').innerHTML = ''; }, 3000);
+      } catch (error) {
+        document.getElementById('profileStatus').innerHTML = '<div class="error">❌ Error: ' + error.message + '</div>';
+      }
     }
 
     function clearProfile() {
@@ -253,7 +332,7 @@
       }
     }
 
-    function saveResume() {
+    async function saveResume() {
       const resumeData = {
         fullName: document.getElementById('resumeFullName').value.trim(),
         email: document.getElementById('resumeEmail').value.trim(),
@@ -274,9 +353,23 @@
         return;
       }
 
-      localStorage.setItem('jobApplierResume', JSON.stringify(resumeData));
-      document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved to memory!</div>';
-      setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
+      try {
+        // Save to database
+        const response = await fetch('/auth/profile', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ profileNotes: '', storedResume: JSON.stringify(resumeData) })
+        });
+
+        if (!response.ok) throw new Error('Failed to save resume');
+
+        // Also save locally
+        localStorage.setItem('jobApplierResume', JSON.stringify(resumeData));
+        document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved!</div>';
+        setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
+      } catch (error) {
+        document.getElementById('resumeStatus').innerHTML = '<div class="error">❌ Error: ' + error.message + '</div>';
+      }
     }
 
     function clearResume() {
@@ -295,6 +388,41 @@
         document.getElementById('resumeProjects').value = '';
         document.getElementById('resumeLanguages').value = '';
         document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume cleared</div>';
+      }
+    }
+
+    async function loadResumeFromDB() {
+      try {
+        const response = await fetch('/auth/me', {
+          headers: getAuthHeaders()
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        if (user.stored_resume) {
+          try {
+            const resumeData = JSON.parse(user.stored_resume);
+            document.getElementById('resumeFullName').value = resumeData.fullName || '';
+            document.getElementById('resumeEmail').value = resumeData.email || '';
+            document.getElementById('resumePhone').value = resumeData.phone || '';
+            document.getElementById('resumeLocation').value = resumeData.location || '';
+            document.getElementById('resumeLinkedin').value = resumeData.linkedin || '';
+            document.getElementById('resumeSummary').value = resumeData.summary || '';
+            document.getElementById('resumeExperience').value = resumeData.experience || '';
+            document.getElementById('resumeEducation').value = resumeData.education || '';
+            document.getElementById('resumeSkills').value = resumeData.skills || '';
+            document.getElementById('resumeCerts').value = resumeData.certifications || '';
+            document.getElementById('resumeProjects').value = resumeData.projects || '';
+            document.getElementById('resumeLanguages').value = resumeData.languages || '';
+            document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from account</div>';
+            localStorage.setItem('jobApplierResume', user.stored_resume);
+          } catch (e) {
+            console.log('Could not parse DB resume');
+          }
+        }
+      } catch (error) {
+        console.log('Could not load resume from DB');
       }
     }
 
@@ -320,6 +448,7 @@
           console.log('Could not parse saved resume');
         }
       }
+      loadResumeFromDB(); // Try to sync from database
     }
 
     function formatResumeForAI() {
