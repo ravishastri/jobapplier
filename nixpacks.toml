@@ -1,0 +1,3 @@
+[provider]
+# Don't use nixpacks for building, just run the server
+runCommand = "npm start"
