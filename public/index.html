@@ -128,33 +128,35 @@
   <script>
     let fullTailoredResume = ''; // Store full resume text for download
 
-    async function loadProfileFromDB() {
-      try {
-        const response = await fetch('/auth/me', {
-          headers: getAuthHeaders()
-        });
-
-        if (!response.ok) return;
-
-        const user = await response.json();
-        if (user.profile_notes) {
-          document.getElementById('profileNotes').value = user.profile_notes;
-          document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from account</div>';
-          localStorage.setItem('jobApplierProfile', user.profile_notes);
-        }
-      } catch (error) {
-        console.log('Could not load profile from DB');
-      }
-    }
-
     // Load saved data on page load
-    window.addEventListener('load', () => {
+    window.addEventListener('load', async () => {
       const savedProfile = localStorage.getItem('jobApplierProfile');
       if (savedProfile) {
         document.getElementById('profileNotes').value = savedProfile;
         document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from memory</div>';
       }
-      loadProfileFromDB(); // Try to sync from database
+
+      // Try to load from database
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch('/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (response.ok) {
+            const user = await response.json();
+            if (user.profile_notes && !savedProfile) {
+              document.getElementById('profileNotes').value = user.profile_notes;
+              document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from account</div>';
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Could not load profile from DB:', error);
+      }
+
       loadResume();
     });
 
