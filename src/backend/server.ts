@@ -206,11 +206,11 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
         const paragraph = new Paragraph({
           children: createTextRunsWithLinks(cleanLine || ''),
           spacing: { line: 240, lineRule: 'auto' },
-          alignment: isCentered ? 'center' : undefined,
+          alignment: isCentered ? 'center' : isBullet ? 'left' : undefined,
           bullet: isBullet ? {
             level: 0
           } : undefined,
-          indent: isBullet ? { left: 720, hanging: 360 } : undefined
+          indent: isBullet ? { left: 360, hanging: 360 } : undefined
         });
 
         paragraphs.push(paragraph);
@@ -308,11 +308,11 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
         const paragraph = new Paragraph({
           children: createTextRunsWithLinks(cleanLine || ''),
           spacing: { line: 240, lineRule: 'auto' },
-          alignment: isCentered ? 'center' : undefined,
+          alignment: isCentered ? 'center' : isBullet ? 'left' : undefined,
           bullet: isBullet ? {
             level: 0
           } : undefined,
-          indent: isBullet ? { left: 720, hanging: 360 } : undefined
+          indent: isBullet ? { left: 360, hanging: 360 } : undefined
         });
 
         paragraphs.push(paragraph);
