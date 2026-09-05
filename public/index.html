@@ -65,13 +65,64 @@
         <div id="profileStatus"></div>
       </div>
 
-      <div class="card">
-        <h2>📄 Your Resume (Stored)</h2>
-        <div class="input-group">
-          <label>Paste your resume here - this will be tailored for each job</label>
-          <textarea id="storedResume" placeholder="Your resume text or markdown..."></textarea>
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>📄 Your Resume (Structured)</h2>
+
+        <!-- Contact Info -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">👤 Contact Information</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" id="resumeFullName" placeholder="Full Name" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            <input type="email" id="resumeEmail" placeholder="Email" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            <input type="tel" id="resumePhone" placeholder="Phone" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            <input type="text" id="resumeLocation" placeholder="Location" style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+          </div>
+          <input type="text" id="resumeLinkedin" placeholder="LinkedIn URL (optional)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 10px;">
         </div>
-        <button class="btn-primary" onclick="saveResume()">💾 Save Resume</button>
+
+        <!-- Professional Summary -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">💼 Professional Summary</h3>
+          <textarea id="resumeSummary" placeholder="Brief overview of your career, skills, and goals (2-3 sentences)" style="height: 100px;"></textarea>
+        </div>
+
+        <!-- Work Experience -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">🏢 Work Experience</h3>
+          <textarea id="resumeExperience" placeholder="Company | Job Title | Years&#10;• Achievement 1&#10;• Achievement 2&#10;&#10;Company | Job Title | Years&#10;• Achievement 1" style="height: 120px;"></textarea>
+        </div>
+
+        <!-- Education -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">🎓 Education</h3>
+          <textarea id="resumeEducation" placeholder="University Name | Degree | Field of Study | Graduation Year&#10;GPA: 3.8/4.0 (optional)" style="height: 80px;"></textarea>
+        </div>
+
+        <!-- Technical Skills -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">⚙️ Technical Skills</h3>
+          <textarea id="resumeSkills" placeholder="Languages: Python, JavaScript, Java&#10;Frameworks: React, Node.js, Django&#10;Databases: PostgreSQL, MongoDB&#10;Tools: Docker, Git, AWS" style="height: 100px;"></textarea>
+        </div>
+
+        <!-- Certifications -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">🏆 Certifications (Optional)</h3>
+          <textarea id="resumeCerts" placeholder="AWS Certified Solutions Architect | 2023&#10;Google Cloud Professional | 2022" style="height: 80px;"></textarea>
+        </div>
+
+        <!-- Projects -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">🚀 Projects (Optional)</h3>
+          <textarea id="resumeProjects" placeholder="Project Name | Tech Stack&#10;• Brief description and impact" style="height: 80px;"></textarea>
+        </div>
+
+        <!-- Languages -->
+        <div class="resume-section">
+          <h3 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">🌍 Languages (Optional)</h3>
+          <input type="text" id="resumeLanguages" placeholder="e.g., English (Native), Spanish (Fluent), Mandarin (Beginner)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+
+        <button class="btn-primary" onclick="saveResume()" style="margin-top: 15px;">💾 Save Resume</button>
         <button class="btn-secondary btn-small" onclick="clearResume()">Clear</button>
         <div id="resumeStatus"></div>
       </div>
@@ -112,15 +163,11 @@
     // Load saved data on page load
     window.addEventListener('load', () => {
       const savedProfile = localStorage.getItem('jobApplierProfile');
-      const savedResume = localStorage.getItem('jobApplierResume');
       if (savedProfile) {
         document.getElementById('profileNotes').value = savedProfile;
         document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from memory</div>';
       }
-      if (savedResume) {
-        document.getElementById('storedResume').value = savedResume;
-        document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from memory</div>';
-      }
+      loadResume();
     });
 
     function saveProfile() {
@@ -143,12 +190,27 @@
     }
 
     function saveResume() {
-      const resume = document.getElementById('storedResume').value.trim();
-      if (!resume) {
-        document.getElementById('resumeStatus').innerHTML = '<div class="error">⚠️ Please enter your resume first</div>';
+      const resumeData = {
+        fullName: document.getElementById('resumeFullName').value.trim(),
+        email: document.getElementById('resumeEmail').value.trim(),
+        phone: document.getElementById('resumePhone').value.trim(),
+        location: document.getElementById('resumeLocation').value.trim(),
+        linkedin: document.getElementById('resumeLinkedin').value.trim(),
+        summary: document.getElementById('resumeSummary').value.trim(),
+        experience: document.getElementById('resumeExperience').value.trim(),
+        education: document.getElementById('resumeEducation').value.trim(),
+        skills: document.getElementById('resumeSkills').value.trim(),
+        certifications: document.getElementById('resumeCerts').value.trim(),
+        projects: document.getElementById('resumeProjects').value.trim(),
+        languages: document.getElementById('resumeLanguages').value.trim()
+      };
+
+      if (!resumeData.fullName || !resumeData.email) {
+        document.getElementById('resumeStatus').innerHTML = '<div class="error">⚠️ Please fill in at least Name and Email</div>';
         return;
       }
-      localStorage.setItem('jobApplierResume', resume);
+
+      localStorage.setItem('jobApplierResume', JSON.stringify(resumeData));
       document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume saved to memory!</div>';
       setTimeout(() => { document.getElementById('resumeStatus').innerHTML = ''; }, 3000);
     }
@@ -156,9 +218,73 @@
     function clearResume() {
       if (confirm('Clear saved resume?')) {
         localStorage.removeItem('jobApplierResume');
-        document.getElementById('storedResume').value = '';
+        document.getElementById('resumeFullName').value = '';
+        document.getElementById('resumeEmail').value = '';
+        document.getElementById('resumePhone').value = '';
+        document.getElementById('resumeLocation').value = '';
+        document.getElementById('resumeLinkedin').value = '';
+        document.getElementById('resumeSummary').value = '';
+        document.getElementById('resumeExperience').value = '';
+        document.getElementById('resumeEducation').value = '';
+        document.getElementById('resumeSkills').value = '';
+        document.getElementById('resumeCerts').value = '';
+        document.getElementById('resumeProjects').value = '';
+        document.getElementById('resumeLanguages').value = '';
         document.getElementById('resumeStatus').innerHTML = '<div class="success">✅ Resume cleared</div>';
       }
+    }
+
+    function loadResume() {
+      const saved = localStorage.getItem('jobApplierResume');
+      if (saved) {
+        try {
+          const resumeData = JSON.parse(saved);
+          document.getElementById('resumeFullName').value = resumeData.fullName || '';
+          document.getElementById('resumeEmail').value = resumeData.email || '';
+          document.getElementById('resumePhone').value = resumeData.phone || '';
+          document.getElementById('resumeLocation').value = resumeData.location || '';
+          document.getElementById('resumeLinkedin').value = resumeData.linkedin || '';
+          document.getElementById('resumeSummary').value = resumeData.summary || '';
+          document.getElementById('resumeExperience').value = resumeData.experience || '';
+          document.getElementById('resumeEducation').value = resumeData.education || '';
+          document.getElementById('resumeSkills').value = resumeData.skills || '';
+          document.getElementById('resumeCerts').value = resumeData.certifications || '';
+          document.getElementById('resumeProjects').value = resumeData.projects || '';
+          document.getElementById('resumeLanguages').value = resumeData.languages || '';
+          document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from memory</div>';
+        } catch (e) {
+          console.log('Could not parse saved resume');
+        }
+      }
+    }
+
+    function formatResumeForAI() {
+      const resumeData = {
+        fullName: document.getElementById('resumeFullName').value.trim(),
+        email: document.getElementById('resumeEmail').value.trim(),
+        phone: document.getElementById('resumePhone').value.trim(),
+        location: document.getElementById('resumeLocation').value.trim(),
+        linkedin: document.getElementById('resumeLinkedin').value.trim(),
+        summary: document.getElementById('resumeSummary').value.trim(),
+        experience: document.getElementById('resumeExperience').value.trim(),
+        education: document.getElementById('resumeEducation').value.trim(),
+        skills: document.getElementById('resumeSkills').value.trim(),
+        certifications: document.getElementById('resumeCerts').value.trim(),
+        projects: document.getElementById('resumeProjects').value.trim(),
+        languages: document.getElementById('resumeLanguages').value.trim()
+      };
+
+      let formatted = `${resumeData.fullName}\n${resumeData.email} | ${resumeData.phone} | ${resumeData.location}`;
+      if (resumeData.linkedin) formatted += `\n${resumeData.linkedin}`;
+      if (resumeData.summary) formatted += `\n\nPROFESSIONAL SUMMARY\n${resumeData.summary}`;
+      if (resumeData.experience) formatted += `\n\nEXPERIENCE\n${resumeData.experience}`;
+      if (resumeData.education) formatted += `\n\nEDUCATION\n${resumeData.education}`;
+      if (resumeData.skills) formatted += `\n\nTECHNICAL SKILLS\n${resumeData.skills}`;
+      if (resumeData.certifications) formatted += `\n\nCERTIFICATIONS\n${resumeData.certifications}`;
+      if (resumeData.projects) formatted += `\n\nPROJECTS\n${resumeData.projects}`;
+      if (resumeData.languages) formatted += `\n\nLANGUAGES\n${resumeData.languages}`;
+
+      return formatted;
     }
 
     async function generateAnswers() {
@@ -205,12 +331,12 @@
     }
 
     async function tailorResume() {
-      const storedResume = localStorage.getItem('jobApplierResume') || document.getElementById('storedResume').value.trim();
+      const storedResume = formatResumeForAI();
       const jobDescription = document.getElementById('jobDescription').value.trim();
       const resumeContainer = document.getElementById('resumeContainer');
       const resumeMessage = document.getElementById('resumeMessage');
 
-      if (!storedResume) {
+      if (!storedResume || !document.getElementById('resumeFullName').value.trim()) {
         resumeMessage.innerHTML = '<div class="error">⚠️ Please save your resume first</div>';
         return;
       }
@@ -225,7 +351,7 @@
       try {
         const response = await fetch('/api/tailor-resume', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ resume: storedResume, jobDescription })
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -338,39 +464,4 @@
       }
     };
 
-    const originalTailorResume = window.tailorResume;
-    window.tailorResume = async function() {
-      const storedResume = localStorage.getItem('jobApplierResume') || document.getElementById('storedResume').value.trim();
-      const jobDescription = document.getElementById('jobDescription').value.trim();
-      const resumeContainer = document.getElementById('resumeContainer');
-      const resumeMessage = document.getElementById('resumeMessage');
-
-      if (!storedResume) {
-        resumeMessage.innerHTML = '<div class="error">⚠️ Please save your resume first</div>';
-        return;
-      }
-      if (!jobDescription) {
-        resumeMessage.innerHTML = '<div class="error">⚠️ Please enter job description</div>';
-        return;
-      }
-
-      resumeMessage.innerHTML = '<div class="loading"><span class="spinner">⚙️</span>Tailoring resume...</div>';
-      resumeContainer.innerHTML = '';
-
-      try {
-        const response = await fetch('/api/tailor-resume', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ resume: storedResume, jobDescription })
-        });
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        resumeMessage.innerHTML = '<div class="success">✅ Resume tailored!</div>';
-        const resumeHtml = `<div class="resume-output" id="tailoredResumeText">${data.tailoredResume}</div><div class="action-buttons"><button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy to Clipboard</button><button class="action-btn" onclick="downloadResume()">⬇️ Download Resume</button></div>`;
-        resumeContainer.innerHTML = resumeHtml;
-      } catch (error) {
-        resumeMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-      }
-    };
   </script>
