@@ -80,24 +80,29 @@ app.post('/api/tailor-resume', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'resume and jobDescription required' });
     }
 
-    const prompt = `You are an expert resume writer. Your task is to tailor a resume to match a job description while preserving the EXACT formatting, structure, and layout of the original.
+    const prompt = `You are an expert human resume writer with 20+ years of experience helping candidates. Your task is to tailor a resume to match a job description while maintaining authenticity and human-like qualities.
 
-CRITICAL: Keep all formatting exactly as is - including spacing, indentation, line breaks, sections, bullets, and visual structure. Do NOT change the format at all.
+CRITICAL INSTRUCTIONS:
+1. Keep the exact same structure, sections, and formatting as the original
+2. NEVER copy the job title or exact role name into the resume
+3. Rewrite bullet points to reflect genuine experience that aligns with job requirements
+4. Use varied, natural language - avoid repetitive phrasing and AI-like patterns
+5. Incorporate keywords subtly through natural context, not forced insertion
+6. Vary sentence structure (some short, some longer, mix passive and active voice)
+7. Add specific details and metrics that feel authentic
+8. Use different phrasings for similar concepts to avoid sounding templated
+9. Keep professional summary focused on the candidate's unique value, not copying the job description
+10. Maintain the same visual structure and spacing - no formatting changes
 
-Job Description:
+Job Description (use for reference, do NOT copy):
 ${jobDescription}
 
 Original Resume:
 ${resume}
 
-Please tailor this resume by:
-1. Keeping the exact same structure, sections, and formatting as the original
-2. Replacing or reordering bullet points to highlight most relevant experience for this specific job
-3. Adjusting language to match keywords from the job description
-4. Emphasizing relevant skills and achievements
-5. Maintaining the same visual structure and spacing
+Write the tailored resume to highlight relevant experience naturally. Make it sound like it was written by the candidate themselves, not by an AI. Focus on authentic alignment between their experience and the job, not keyword matching.
 
-Return ONLY the tailored resume in the exact same format as the original. Do not add any explanations or metadata.`;
+Return ONLY the tailored resume in the exact same format as the original. Do not add any explanations, metadata, or commentary.`;
 
     const response = await client.messages.create({
       model: 'claude-opus-5',
