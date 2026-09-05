@@ -130,8 +130,10 @@
 
     // Load saved data on page load
     window.addEventListener('load', async () => {
+      console.log('Page loaded, starting data load...');
       const savedProfile = localStorage.getItem('jobApplierProfile');
       if (savedProfile) {
+        console.log('Found profile in localStorage');
         document.getElementById('profileNotes').value = savedProfile;
         document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from memory</div>';
       }
@@ -139,15 +141,19 @@
       // Try to load from database
       try {
         const token = localStorage.getItem('token');
+        console.log('Token exists:', !!token);
         if (token) {
           const response = await fetch('/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
+          console.log('Auth/me response status:', response.status);
           if (response.ok) {
             const user = await response.json();
+            console.log('User data:', {hasProfileNotes: !!user.profile_notes, hasStoredResume: !!user.stored_resume});
             if (user.profile_notes && !savedProfile) {
+              console.log('Loading profile from DB');
               document.getElementById('profileNotes').value = user.profile_notes;
               document.getElementById('profileStatus').innerHTML = '<div class="badge">✅ Profile loaded from account</div>';
             }
@@ -265,14 +271,17 @@
       if (!saved) {
         try {
           const token = localStorage.getItem('token');
+          console.log('Attempting to load resume from DB, token exists:', !!token);
           if (token) {
             const response = await fetch('/auth/me', {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
             });
+            console.log('Resume load response status:', response.status);
             if (response.ok) {
               const user = await response.json();
+              console.log('User data received:', {hasStoredResume: !!user.stored_resume, resumeLength: user.stored_resume?.length});
               if (user.stored_resume) {
                 document.getElementById('storedResume').value = user.stored_resume;
                 document.getElementById('resumeStatus').innerHTML = '<div class="badge">✅ Resume loaded from account</div>';
