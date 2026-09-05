@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -X POST http://localhost:3001/api/scrape/test)",
+      "Bash(curl -s http://localhost:3001/api/jobs)",
+      "Bash(pkill -f \"chrome-mac-arm64\")",
+      "Bash(pkill -f \"playwright\")",
+      "Bash(curl -s http://localhost:3001/api/resumes)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
