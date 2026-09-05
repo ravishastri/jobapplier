@@ -1,25 +1,16 @@
-import express from 'express';
+console.log('Starting server...');
+console.log('Node version:', process.version);
+console.log('CWD:', process.cwd());
+console.log('Files in src/backend:', require('fs').readdirSync('src/backend'));
 
-const app = express();
+import http from 'http';
 const PORT = process.env.PORT || 3001;
 
-console.log('Minimal server starting...');
-
-// Intercept .get to see what's being registered
-const originalGet = app.get.bind(app);
-app.get = function(path: any, ...args: any[]) {
-  console.log(`[ROUTE] Registering GET: ${path}`);
-  if (path === '*') {
-    console.error('[ERROR] Wildcard route attempted!');
-    console.trace();
-  }
-  return originalGet(path, ...args);
-};
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ status: 'ok' }));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
