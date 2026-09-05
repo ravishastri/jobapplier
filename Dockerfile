@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Force fresh build (invalidate cache)
+RUN echo "Build timestamp: $(date)"
+
 # Copy package files
 COPY package*.json ./
 

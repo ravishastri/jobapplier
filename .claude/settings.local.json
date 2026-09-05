@@ -14,7 +14,25 @@
       "Bash(git commit *)",
       "Bash(git remote *)",
       "Bash(git branch *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(chmod +x migrate.sh)",
+      "Bash(./migrate.sh \"postgresql://postgres:AEApMFTTSNbynfFTcsNiqshHpyvWfDYA@postgres.railway.internal:5432/railway\")",
+      "Bash(npx tsx *)",
+      "Bash(git commit -m 'Add automatic database schema initialization on server startup *)",
+      "Bash(git commit -m 'Fix database initialization path resolution *)",
+      "Bash(git commit -m 'Make database initialization non-blocking with logging *)",
+      "Bash(git commit -m 'Add setup endpoint for database initialization *)",
+      "Bash(curl -s https://jobapplier-production.up.railway.app/health)",
+      "Bash(git commit -m 'Inline schema SQL and initialize database in background *)",
+      "Bash(curl -s 'https://railway.com/api/v1/deployments?limit=5')",
+      "Bash(curl *)",
+      "Bash(timeout 15 curl -v https://jobapplier-production.up.railway.app/health)",
+      "Bash(curl -m 10 https://jobapplier-production.up.railway.app)",
+      "Bash(git commit -m 'Disable background DB init to get server running *)",
+      "Bash(git commit -m 'Strip server to minimal version for debugging *)",
+      "Bash(git commit -m 'Fix PathError by removing problematic static file serving *)",
+      "Bash(grep -E '\\\\.\\(json|yaml|yml\\)$')",
+      "Bash(timeout 3 npx tsx src/backend/server.ts)"
     ]
   }
 }
