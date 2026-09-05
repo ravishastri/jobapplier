@@ -865,5 +865,5 @@ app.post('/api/applications/submit', async (req: Request, res: Response) => {
 // Frontend static file serving disabled for now
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
