@@ -3,6 +3,8 @@ import express from 'express';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+console.log('Minimal server starting...');
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
