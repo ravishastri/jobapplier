@@ -44,7 +44,13 @@
     .action-btn { background: #667eea; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; width: auto; }
     .action-btn:hover { background: #764ba2; }
     .badge { display: inline-block; background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; margin-top: 5px; }
-    @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } .answers-grid { grid-template-columns: 1fr; } }
+    .resume-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+    .resume-panel { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 20px; }
+    .resume-panel h3 { color: #667eea; margin-bottom: 15px; font-size: 1em; text-align: center; }
+    .resume-panel.original { border-left: 4px solid #667eea; }
+    .resume-panel.tailored { border-left: 4px solid #28a745; }
+    .resume-text { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85em; line-height: 1.5; color: #333; max-height: 600px; overflow-y: auto; }
+    @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } .answers-grid { grid-template-columns: 1fr; } .resume-comparison { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -361,8 +367,25 @@
         if (data.error) throw new Error(data.error);
         resumeMessage.innerHTML = '<div class="success">✅ Resume tailored!</div>';
         fullTailoredResume = data.tailoredResume; // Store full text for download
-        const escapedResume = data.tailoredResume.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const resumeHtml = `<div class="resume-output" id="tailoredResumeText">${escapedResume}</div><div class="action-buttons"><button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy to Clipboard</button><button class="action-btn" onclick="downloadResume()">⬇️ Download Resume</button></div>`;
+        const originalResume = formatResumeForAI();
+        const escapedOriginal = originalResume.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const escapedTailored = data.tailoredResume.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const resumeHtml = `
+          <div class="resume-comparison">
+            <div class="resume-panel original">
+              <h3>📄 Your Original Resume</h3>
+              <div class="resume-text">${escapedOriginal}</div>
+            </div>
+            <div class="resume-panel tailored">
+              <h3>✨ Tailored for This Job</h3>
+              <div class="resume-text" id="tailoredResumeText">${escapedTailored}</div>
+            </div>
+          </div>
+          <div class="action-buttons" style="margin-top: 20px;">
+            <button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy Tailored</button>
+            <button class="action-btn" onclick="downloadResume()">⬇️ Download Tailored</button>
+          </div>
+        `;
         resumeContainer.innerHTML = resumeHtml;
       } catch (error) {
         resumeMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
