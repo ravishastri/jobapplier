@@ -129,19 +129,37 @@ Return ONLY the tailored resume in the exact same format as the original. Do not
       // Parse the resume text into paragraphs with formatting
       const lines = tailoredResume.split('\n');
       const paragraphs = lines.map(line => {
-        const isBold = line.match(/^[A-Z][A-Z\s]+$/) && line.length < 100; // All caps headers
-        const isBullet = line.trim().startsWith('-') || line.trim().startsWith('•');
-        const cleanLine = line.replace(/^[-•]\s*/, ''); // Remove bullet char
+        const trimmedLine = line.trim();
+
+        // Check if line should be centered (Name, section headers like AREAS OF EXPERTISE, EXPERIENCE)
+        const isCentered = /^[A-Z][a-zA-Z\s]*$/.test(trimmedLine) &&
+                          (trimmedLine.length < 60) &&
+                          (trimmedLine.includes('EXPERTISE') ||
+                           trimmedLine.includes('EXPERIENCE') ||
+                           trimmedLine.includes('EDUCATION') ||
+                           trimmedLine.includes('SKILLS') ||
+                           trimmedLine === trimmedLine.toUpperCase() && trimmedLine.split(' ').length <= 4);
+
+        // Check if line is a bullet point
+        const isBullet = trimmedLine.startsWith('-') || trimmedLine.startsWith('•');
+        const cleanLine = trimmedLine.replace(/^[-•]\s*/, '').trim();
+
+        // Import AlignmentType from docx if using bullets
+        const alignment = isCentered ? 'center' : undefined;
 
         return new Paragraph({
           children: [
             new TextRun({
               text: cleanLine || '',
-              bold: isBold
+              bold: false // Remove all bold by default
             })
           ],
           spacing: { line: 240, lineRule: 'auto' },
-          indent: isBullet ? { left: 720 } : undefined
+          alignment: alignment,
+          bullet: isBullet ? {
+            level: 0
+          } : undefined,
+          indent: isBullet ? { left: 720, hanging: 360 } : undefined
         });
       });
 
@@ -180,19 +198,34 @@ app.post('/api/download-resume-word', authenticateToken, async (req, res) => {
     // Parse the resume text into paragraphs with formatting
     const lines = resumeText.split('\n');
     const paragraphs = lines.map(line => {
-      const isBold = line.match(/^[A-Z][A-Z\s]+$/) && line.length < 100;
-      const isBullet = line.trim().startsWith('-') || line.trim().startsWith('•');
-      const cleanLine = line.replace(/^[-•]\s*/, '');
+      const trimmedLine = line.trim();
+
+      // Check if line should be centered (Name, section headers)
+      const isCentered = /^[A-Z][a-zA-Z\s]*$/.test(trimmedLine) &&
+                        (trimmedLine.length < 60) &&
+                        (trimmedLine.includes('EXPERTISE') ||
+                         trimmedLine.includes('EXPERIENCE') ||
+                         trimmedLine.includes('EDUCATION') ||
+                         trimmedLine.includes('SKILLS') ||
+                         trimmedLine === trimmedLine.toUpperCase() && trimmedLine.split(' ').length <= 4);
+
+      // Check if line is a bullet point
+      const isBullet = trimmedLine.startsWith('-') || trimmedLine.startsWith('•');
+      const cleanLine = trimmedLine.replace(/^[-•]\s*/, '').trim();
 
       return new Paragraph({
         children: [
           new TextRun({
             text: cleanLine || '',
-            bold: isBold
+            bold: false
           })
         ],
         spacing: { line: 240, lineRule: 'auto' },
-        indent: isBullet ? { left: 720 } : undefined
+        alignment: isCentered ? 'center' : undefined,
+        bullet: isBullet ? {
+          level: 0
+        } : undefined,
+        indent: isBullet ? { left: 720, hanging: 360 } : undefined
       });
     });
 
