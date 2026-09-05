@@ -269,3 +269,108 @@
   </script>
 </body>
 </html>
+
+  <script>
+    // ===== AUTHENTICATION =====
+    window.addEventListener('load', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/auth.html';
+      }
+    });
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.clear();
+        window.location.href = '/auth.html';
+      }
+    }
+
+    function getAuthHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      };
+    }
+
+    // Update all fetch calls to include auth header
+    const originalGenerateAnswers = window.generateAnswers;
+    window.generateAnswers = async function() {
+      const profileNotes = localStorage.getItem('jobApplierProfile') || document.getElementById('profileNotes').value.trim();
+      const jobQuestions = document.getElementById('jobQuestions').value.trim();
+      const answersContainer = document.getElementById('answersContainer');
+      const answersMessage = document.getElementById('answersMessage');
+
+      if (!profileNotes) {
+        answersMessage.innerHTML = '<div class="error">⚠️ Please save your profile first</div>';
+        return;
+      }
+      if (!jobQuestions) {
+        answersMessage.innerHTML = '<div class="error">⚠️ Please enter questions</div>';
+        return;
+      }
+
+      answersMessage.innerHTML = '<div class="loading"><span class="spinner">⚙️</span>Generating answers...</div>';
+      answersContainer.innerHTML = '';
+      const questions = jobQuestions.split('\n').map(q => q.trim()).filter(q => q.length > 0);
+
+      try {
+        const response = await fetch('/api/generate-answers', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ questions, context: profileNotes })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        answersMessage.innerHTML = '<div class="success">✅ Answers generated!</div>';
+        const answers = data.answers;
+        let html = '<div class="answers-grid">';
+        questions.forEach((question, i) => {
+          const answerKey = `answer_${i + 1}`;
+          const answer = answers[answerKey] || 'No answer generated';
+          html += `<div class="answer-box"><div class="answer-label">Q${i + 1}: ${question}</div><div class="answer-text">${answer}</div></div>`;
+        });
+        html += '</div>';
+        answersContainer.innerHTML = html;
+      } catch (error) {
+        answersMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    const originalTailorResume = window.tailorResume;
+    window.tailorResume = async function() {
+      const storedResume = localStorage.getItem('jobApplierResume') || document.getElementById('storedResume').value.trim();
+      const jobDescription = document.getElementById('jobDescription').value.trim();
+      const resumeContainer = document.getElementById('resumeContainer');
+      const resumeMessage = document.getElementById('resumeMessage');
+
+      if (!storedResume) {
+        resumeMessage.innerHTML = '<div class="error">⚠️ Please save your resume first</div>';
+        return;
+      }
+      if (!jobDescription) {
+        resumeMessage.innerHTML = '<div class="error">⚠️ Please enter job description</div>';
+        return;
+      }
+
+      resumeMessage.innerHTML = '<div class="loading"><span class="spinner">⚙️</span>Tailoring resume...</div>';
+      resumeContainer.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/tailor-resume', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ resume: storedResume, jobDescription })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        resumeMessage.innerHTML = '<div class="success">✅ Resume tailored!</div>';
+        const resumeHtml = `<div class="resume-output" id="tailoredResumeText">${data.tailoredResume}</div><div class="action-buttons"><button class="action-btn" onclick="copyToClipboard('#tailoredResumeText')">📋 Copy to Clipboard</button><button class="action-btn" onclick="downloadResume()">⬇️ Download Resume</button></div>`;
+        resumeContainer.innerHTML = resumeHtml;
+      } catch (error) {
+        resumeMessage.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+  </script>
