@@ -74,16 +74,17 @@ app.post('/api/generate-answers', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'questions array required' });
     }
 
-    const prompt = `Write straightforward, humble job application answers. No fluff, no flowery language, no made-up anecdotes. Be direct and authentic.
+    const prompt = `Write answers that pack information into every sentence. Use active voice and strong verbs. Put facts before explanations. No em dashes, no hedging, no padding.
 
-Background:
-${context || 'No additional context provided'}
+Follow Style by Williams: choose precise verbs over nouns, eliminate unnecessary words, vary sentence length. Sound like yourself typing quickly.
 
-Answer these questions. Keep each answer brief, grounded, and honest:
+Background: ${context || 'No additional context provided'}
+
+Answer these questions:
 
 ${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
-Return JSON with keys: answer_1, answer_2, etc. Answers should sound like a real person typing, not polished marketing copy.`;
+Return JSON with keys: answer_1, answer_2, etc.`;
 
     const response = await client.messages.create({
       model: 'claude-opus-5',
