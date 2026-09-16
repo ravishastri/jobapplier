@@ -70,11 +70,15 @@ export default function ResumesPanel() {
         <div className="form-group">
           <label>Resume Content (Text/Markdown)</label>
           <textarea
-            placeholder="Paste your resume content here..."
+            placeholder="Paste your resume content here - include ALL your job experience..."
             value={resumeContent}
             onChange={(e) => setResumeContent(e.target.value)}
-            rows={10}
+            rows={20}
+            style={{ fontFamily: 'monospace', fontSize: '12px' }}
           />
+          <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+            Characters: {resumeContent.length} | Lines: {resumeContent.split('\n').length}
+          </p>
         </div>
 
         <button onClick={handleUpload} disabled={loading} className="btn btn-primary">
