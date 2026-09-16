@@ -67,6 +67,57 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Get all resumes for the current user
+app.get('/api/resumes', authenticateToken, async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT id, version_name, is_active, created_at FROM resumes ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching resumes:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+// Upload/create a new resume
+app.post('/api/resumes', authenticateToken, async (req, res) => {
+  try {
+    const { version_name, content, is_active } = req.body;
+
+    if (!version_name || !content) {
+      return res.status(400).json({ error: 'version_name and content required' });
+    }
+
+    const result = await query(
+      'INSERT INTO resumes (version_name, content, is_active) VALUES ($1, $2, $3) RETURNING id',
+      [version_name, content, is_active || false]
+    );
+
+    res.json({ id: result.rows[0].id, message: 'Resume uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading resume:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+// Get a specific resume by ID
+app.get('/api/resumes/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await query('SELECT * FROM resumes WHERE id = $1', [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching resume:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 app.post('/api/generate-answers', authenticateToken, async (req, res) => {
   try {
     const { questions, context } = req.body;
