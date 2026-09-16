@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { Document, Packer, Paragraph, TextRun, ExternalHyperlink } from 'docx';
 import authRouter, { initializeAuthDB, authenticateToken } from './auth.js';
+import { query } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -106,6 +107,89 @@ Return JSON with keys: answer_1, answer_2, etc.`;
     res.json({ answers: JSON.parse(jsonText) });
   } catch (error) {
     console.error('Error generating answers:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+app.post('/api/resume/tailor', authenticateToken, async (req, res) => {
+  try {
+    const { jobId, resumeId } = req.body;
+
+    if (!jobId || !resumeId) {
+      return res.status(400).json({ error: 'jobId and resumeId required' });
+    }
+
+    // Fetch resume from database
+    const resumeResult = await query('SELECT content FROM resumes WHERE id = $1', [resumeId]);
+    if (resumeResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Resume not found' });
+    }
+    const resume = resumeResult.rows[0].content;
+
+    // Fetch job posting from database
+    const jobResult = await query(
+      'SELECT title, company, job_description FROM job_postings WHERE id = $1',
+      [jobId]
+    );
+    if (jobResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    const job = jobResult.rows[0];
+    const jobDescription = job.job_description || '';
+
+    // Tailor the resume using Claude
+    const prompt = `You are an expert human resume writer with 20+ years of experience helping candidates. Your task is to tailor a resume to match a job description while maintaining authenticity and human-like qualities.
+
+CRITICAL INSTRUCTIONS:
+1. Keep the exact same structure, sections, and formatting as the original
+2. NEVER copy the job title or exact role name into the resume
+3. Rewrite bullet points to reflect genuine experience that aligns with job requirements
+4. ADD METRICS AND NUMBERS to every bullet point where possible:
+   - Percentages (e.g., "Improved efficiency by 25%")
+   - Dollar amounts (e.g., "Generated $500K in revenue")
+   - Headcount (e.g., "Led team of 12 engineers")
+   - Time savings (e.g., "Reduced load time from 8s to 2s")
+   - Growth metrics (e.g., "Grew user base by 40%")
+   - If exact numbers aren't in original, estimate realistic ranges based on typical impact
+5. Use varied, natural language - avoid repetitive phrasing and AI-like patterns
+6. Incorporate keywords subtly through natural context, not forced insertion
+7. Vary sentence structure (some short, some longer, mix passive and active voice)
+8. Use different phrasings for similar concepts to avoid sounding templated
+9. Keep professional summary focused on the candidate's unique value, not copying the job description
+10. Maintain the same visual structure and spacing - no formatting changes
+11. INCLUDE ALL JOBS AND EXPERIENCE FROM THE ORIGINAL RESUME - do not truncate or omit any sections
+
+Job Description (use for reference, do NOT copy):
+${jobDescription}
+
+Original Resume:
+${resume}
+
+Write the tailored resume to highlight relevant experience naturally with strong metrics. Make it sound like it was written by the candidate themselves, not by an AI. Focus on authentic alignment between their experience and the job, not keyword matching.
+
+Return ONLY the tailored resume in the exact same format as the original. Do not add any explanations, metadata, or commentary.`;
+
+    const response = await client.messages.create({
+      model: 'claude-opus-5',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const textContent = response.content.find((c: any) => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text content in response');
+    }
+
+    const tailoredResume = textContent.text;
+
+    res.json({
+      originalResume: resume,
+      tailoredResume,
+      jobTitle: job.title,
+      company: job.company
+    });
+  } catch (error) {
+    console.error('Error tailoring resume:', error);
     res.status(500).json({ error: String(error) });
   }
 });
